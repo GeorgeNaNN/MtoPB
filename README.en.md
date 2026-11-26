@@ -41,7 +41,6 @@ MtoPB/
 ├── resources/          # Application code, templates, and runtime dependencies
 ├── config.yml          # Application version and default settings
 ├── LICENSE             # MIT License
-├── MtoPB.exe           # Windows desktop application
 ├── README.en.md        # English project documentation
 ├── README.md           # Chinese project documentation
 ├── sync.bat            # Syncs the configured version to the application metadata
