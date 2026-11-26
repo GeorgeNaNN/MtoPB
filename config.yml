@@ -1,0 +1,61 @@
+version: v1.0.0
+cover:
+  selected_cover: 1
+  cover_type: template
+  custom_cover_pdf: ""
+  covers:
+    - id: 1
+      main_title: MtoPB
+      subtitle: MtoPB
+      link_url: https://github.com/GeorgeNaNN/MtoPB
+      link_text: GeorgeNaNN/MtoPB
+      link_color: "#0066cc"
+      image: ./ico/mtopb.png
+      use_image: true
+      image_width_percent: 66
+    - id: 2
+      main_title: MtoPB
+      author: GeorgeNaNN
+      date: 2026-11-26 # 每次打开软件时，自动获取电脑上的当前日期并更新
+    - id: 3
+      main_title: MtoPB
+      subtitle: MtoPB
+      author: GeorgeNaNN
+      date: 2026-11-26 # 每次打开软件时，自动获取电脑上的当前日期并更新
+    - id: 4
+      main_title: MtoPB
+      author: GeorgeNaNN
+      date: 2026-11-26 # 每次打开软件时，自动获取电脑上的当前日期并更新
+      frame_top_cm: 0.5
+      frame_horizontal_cm: 0.5
+      frame_bottom_cm: 0.5
+watermark:
+  enabled: false
+  text: 我是水印
+  style: diagonal
+  color: "#98a5b2"
+  opacity: 0.33
+  font_size: 150
+  font_sizes:
+    diagonal-up: 150
+    diagonal: 150
+    center: 150
+    tiled: 25
+    tiled-up: 25
+    tiled-horizontal: 25
+page:
+  toc_title: 目录
+  toc_depth: 6
+  page_size: A4
+  page_margin: 6mm 2cm 2cm
+  link_annotation_color: "#008080"
+  page_number_start: toc
+  code_line_numbers: true
+  image_pagination: auto
+  code_block_pagination: auto
+  table_pagination: auto
+pdf_metadata:
+  title: ""
+  author: ""
+  subject: ""
+  keywords: ""

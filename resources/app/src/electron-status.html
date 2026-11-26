@@ -1,0 +1,1280 @@
+<!doctype html>
+<html lang="zh-CN"><head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MtoPB</title>
+  <style>
+    /* ═══════════════════════════════════════════════════════════
+       MtoPB — Blue Jelly Gradient UI (High Performance)
+       低饱和蓝色果冻渐变 · 柔和通透 · 满帧丝滑无卡顿
+       ═══════════════════════════════════════════════════════════ */
+
+    :root {
+      color-scheme: light;
+      font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+      color: #283e54;
+      /* 背景：低饱和柔和淡蓝渐变 */
+      background: linear-gradient(170deg, #edf4fc 0%, #f4f8fe 45%, #ecf3fb 100%);
+      --jelly-from: #d4e7f8;
+      --jelly-to:   #c1dcf5;
+      --card-bg:    #ffffff;
+      --card-soft:  rgba(255, 255, 255, 0.92);
+      --border:     rgba(165, 198, 228, 0.55);
+      --border-hl:  rgba(85, 160, 222, 0.65);
+      --accent:     #529cd8;
+      --accent-deep:#397eb8;
+      --accent-soft: rgba(82, 156, 216, 0.10);
+      --text-1:     #243a4e;
+      --text-2:     #4b677e;
+      --text-3:     #7c95a8;
+      --radius-s:   8px;
+      --radius-m:   12px;
+      --radius-l:   16px;
+      --shadow-card: 0 2px 10px rgba(70, 130, 185, 0.08), 0 1px 3px rgba(70, 130, 185, 0.05);
+      --shadow-btn:  0 1px 4px rgba(70, 130, 185, 0.12);
+      --transition:  .15s ease-out;
+    }
+
+    * { box-sizing: border-box; margin: 0; }
+    [hidden] { display: none !important; }
+    .contents { display: contents; }
+
+    @font-face { font-family: "Noto Serif SC Preview"; font-style: normal; font-weight: 400; src: url("../../../fonts/NotoSerifSC-Regular.ttf") format("truetype"); }
+    @font-face { font-family: "Noto Serif SC Preview"; font-style: normal; font-weight: 700; src: url("../../../fonts/NotoSerifSC-Bold.ttf") format("truetype"); }
+
+    /* ── 全局 body ── */
+    body {
+      margin: 0; min-width: 900px; min-height: 100vh;
+      padding: 40px 28px 24px;
+    }
+
+    .window-drag-strip {
+      position: fixed; z-index: 1000; top: 0; left: 0; right: 0; height: 32px;
+      display: flex; align-items: stretch; justify-content: flex-end;
+      border-bottom: 1px solid rgba(74, 132, 174, 0.32);
+      background: #66a3ce;
+      -webkit-app-region: drag;
+      user-select: none;
+    }
+
+    main { width: min(1480px, 100%); margin: 0 auto; }
+
+    /* ── Header ── */
+    header {
+      display: flex; align-items: center; gap: 14px;
+      padding: 0 0 16px;
+      border-bottom: 1px solid rgba(165, 198, 228, 0.28);
+    }
+    .mark {
+      width: 40px; height: 40px; object-fit: contain;
+      filter: drop-shadow(0 2px 5px rgba(82, 156, 216, 0.25));
+    }
+    h1 {
+      margin: 0; color: var(--accent-deep);
+      font-size: 20px; font-weight: 700; letter-spacing: .3px;
+    }
+    .app-version { display: inline-block; margin-left: 7px; color: var(--text-3); font-size: 11px; font-weight: 600; letter-spacing: .2px; vertical-align: 2px; }
+    .header-actions { display: flex; margin-left: auto; align-items: center; }
+    .header-actions button { -webkit-app-region: no-drag; }
+    .language-menu { position: relative; margin-right: 8px; -webkit-app-region: no-drag; }
+    .language-options { position: absolute; z-index: 30; top: calc(100% + 7px); right: 0; min-width: 142px; padding: 5px; border: 1px solid var(--border); border-radius: var(--radius-s); background: #fff; box-shadow: var(--shadow-card); }
+    .language-options button { display: block; width: 100%; border: 0; background: transparent; text-align: left; }
+    .language-options button:hover { background: var(--accent-soft); }
+    .language-options button[aria-pressed="true"] { border-color: var(--border-hl); background: rgba(165, 198, 228, 0.32); color: var(--accent-deep); font-weight: 600; }
+    .language-options button[aria-pressed="true"]:hover { background: rgba(165, 198, 228, 0.42); }
+    #check-updates { border: none; background: linear-gradient(135deg, #64aee5 0%, var(--accent) 55%, var(--accent-deep) 100%); color: #fff; font-weight: 600; }
+    #check-updates:hover:not(:disabled) { background: linear-gradient(135deg, #5aa4de 0%, var(--accent-deep) 100%); box-shadow: 0 3px 12px rgba(57,126,184,.35), inset 0 1px 0 rgba(255,255,255,.30); transform: translateY(-0.5px); }
+
+    /* ── 两栏工作区 ── */
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(460px, 1fr) minmax(0, 1fr);
+      gap: 24px; align-items: start;
+      margin-top: 4px;
+    }
+    .left-column {
+      display: flex; min-width: 0;
+      min-height: calc(100vh - 100px);
+      flex-direction: column; gap: 0;
+    }
+
+    /* ── Section 通用 ── */
+    .section { margin-top: 16px; }
+    .section-head {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 10px;
+    }
+    .section-head h2 {
+      margin: 0; font-size: 13.5px; font-weight: 650;
+      color: var(--text-1);
+    }
+    .count, .hint { color: var(--text-3); font-size: 11.5px; }
+
+    /* ── 拖放区（零重绘开销的果冻质感） ── */
+    .drop-zone {
+      display: flex; min-height: 80px;
+      align-items: center; justify-content: center;
+      gap: 14px; padding: 14px 16px;
+      border: 1.5px dashed rgba(115, 175, 222, 0.55);
+      border-radius: var(--radius-m);
+      background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(230,242,253,0.70) 100%);
+      box-shadow: inset 0 1px 2px rgba(255,255,255,0.8), 0 2px 8px rgba(90,150,210,0.06);
+      transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
+    }
+    .drop-zone.dragging {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, rgba(220,238,255,0.95) 0%, rgba(198,225,250,0.80) 100%);
+      box-shadow: 0 0 0 3px rgba(82,156,216,0.15);
+    }
+    .drop-zone.dragging * { pointer-events: none; }
+    .file-drop.invalid, .image-drop.invalid, .custom-cover-drop.invalid { border-color: #d1787e; background: #fff5f5; }
+    .custom-cover-settings { margin-top: 10px; }
+    .custom-cover-hint { margin: 8px 2px 0; line-height: 1.5; }
+    .custom-cover-info { position: relative; display: flex; min-width: 0; align-items: center; justify-content: center; padding: 12px 34px 12px 12px; overflow-wrap: anywhere; text-align: center; }
+    .preview.custom-cover .preview-content { display: none !important; }
+    .custom-cover-preview { position: absolute; z-index: 1; inset: 0; overflow: hidden; background-color: #fff !important; }
+    .custom-cover-canvas { display: block; width: 100%; height: 100%; background: #fff; }
+    .custom-cover-canvas[hidden] { display: none; }
+    .custom-cover-message { position: absolute; z-index: 1; inset: 0; display: grid; place-items: center; padding: 18px; color: var(--text-2); font-size: 16px; line-height: 1.4; text-align: center; overflow-wrap: anywhere; pointer-events: none; }
+    .custom-cover-message.empty-custom-cover { font-size: 32px; }
+    .drop-copy { color: var(--text-3); font-size: 11.5px; }
+
+    /* ── Markdown 文件选择器 ── */
+    .markdown-picker {
+      display: grid;
+      grid-template-columns: minmax(0, .88fr) minmax(0, 1.12fr);
+      gap: 10px; align-items: stretch;
+    }
+    .markdown-picker:not(.has-files) .file-drop { grid-column: 1 / -1; min-height: 120px; }
+    .file-drop { min-height: 120px; flex-direction: column; gap: 10px; }
+
+    .file-panel {
+      display: flex; min-width: 0; flex-direction: column;
+      padding: 9px;
+      border: 1.5px solid rgba(89, 155, 213, 0.46);
+      border-radius: var(--radius-m);
+      background: linear-gradient(135deg, rgba(220, 238, 255, 0.96) 0%, rgba(181, 217, 246, 0.88) 100%);
+      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.9), 0 3px 10px rgba(70, 130, 185, 0.11);
+    }
+    .list-shell {
+      min-height: 102px; max-height: 156px;
+      overflow: auto;
+      border: 1px solid rgba(122, 175, 218, 0.42);
+      border-radius: var(--radius-s);
+      background: rgba(255, 255, 255, 0.80);
+      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.85), 0 1px 4px rgba(70, 130, 185, 0.06);
+      contain: content;
+    }
+    .file-panel-head {
+      display: flex; width: 100%; min-height: 22px;
+      align-items: center; justify-content: flex-start;
+      gap: 0; margin: 0 4px 7px;
+      color: #315c7d; font-size: 11px; font-weight: 650;
+    }
+    .file-panel-title { color: var(--text-1); font: inherit; font-size: 12px; font-weight: 500; }
+    .file-panel-head #file-count { margin-left: 0; color: var(--text-1); font: inherit; font-size: 12px; font-weight: 500; text-align: left; white-space: nowrap; }
+    .file-panel-head .clear-files { min-height: 26px; margin-left: auto; padding: 0 10px; border: 1px solid rgba(204, 91, 105, .42); border-radius: 8px; background: linear-gradient(180deg, #fff0f1 0%, #f6c7cc 100%); color: #9f3542; font-size: 11px; box-shadow: inset 0 1px 0 rgba(255,255,255,.88), 0 2px 5px rgba(178,69,83,.16); }
+    .file-panel-head .clear-files:hover:not(:disabled) { border-color: rgba(184, 61, 76, .62); background: linear-gradient(180deg, #ffe5e8 0%, #f0b0b8 100%); color: #842c37; box-shadow: inset 0 1px 0 rgba(255,255,255,.82), 0 3px 8px rgba(178,69,83,.24); }
+    #file-list { display: flex; flex-direction: column; }
+    .file-row {
+      display: grid; min-height: 36px;
+      grid-template-columns: 34px minmax(0, 1fr) 32px;
+      align-items: center; gap: 7px;
+      padding: 0 10px 0 12px;
+      border-bottom: 1px solid rgba(165, 198, 228, 0.25);
+      transition: background var(--transition);
+    }
+    .file-row:last-child { border-bottom: 0; }
+    .file-row:hover { background: rgba(255, 255, 255, 0.55); }
+    .file-order { color: var(--accent); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .file-name { overflow: hidden; color: var(--text-1); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+    .remove-file {
+      display: grid; width: 26px; height: 26px; min-height: 26px;
+      place-items: center; padding: 0;
+      border: 1px solid transparent; border-radius: 6px;
+      background: transparent; color: var(--text-3);
+      font-size: 17px; line-height: 1;
+      transition: all var(--transition);
+    }
+    .remove-file:hover:not(:disabled) { border-color: rgba(210,120,130,.30); background: rgba(255,230,232,.75); color: #c0505a; }
+    #empty-files { display: grid; min-height: 102px; place-items: center; color: var(--text-3); font-size: 12px; }
+
+    /* ── 进度条 ── */
+    .track {
+      height: 6px; margin: 16px 0 10px;
+      overflow: hidden; border-radius: 6px;
+      background: linear-gradient(90deg, var(--jelly-from), var(--jelly-to));
+    }
+    #progress {
+      position: relative; height: 100%; width: 0;
+      overflow: hidden; border-radius: inherit;
+      background: linear-gradient(90deg, #62abdf, var(--accent));
+      transition: width .22s ease;
+    }
+    .track.running #progress::after {
+      position: absolute; top: 0; bottom: 0; left: 0; width: 28%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.65), transparent);
+      content: ""; animation: progress-shine 1.4s ease-in-out infinite; pointer-events: none;
+    }
+    @keyframes progress-shine { from { transform: translateX(-140%); } to { transform: translateX(460%); } }
+    .track.success #progress { background: linear-gradient(90deg, #5dba8a, #3da872); }
+    .track.failed  #progress { background: linear-gradient(90deg, #d8707a, #c8505e); }
+    .track.success #progress::after, .track.failed #progress::after { display: none; }
+
+    /* ── 日志区 ── */
+    #log {
+      flex: 1; min-height: 120px; max-height: 200px;
+      margin: 0; padding: 12px 14px;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-s);
+      background: var(--card-bg);
+      box-shadow: inset 0 1px 3px rgba(70,130,185,.05);
+      color: var(--text-2);
+      font: 11px/1.6 Consolas, "Cascadia Code", monospace;
+      white-space: pre-wrap; overflow-wrap: anywhere;
+      contain: content;
+    }
+    #log.error { color: #b04048; }
+
+    /* ── Footer ── */
+    footer {
+      display: flex; align-items: center;
+      gap: 10px; padding-top: 14px;
+    }
+
+    /* ── 按钮系统 ── */
+    button {
+      min-height: 34px; padding: 0 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-s);
+      background: linear-gradient(180deg, #ffffff 0%, #f4f9fd 100%);
+      color: var(--text-1);
+      font: inherit; font-size: 12px; font-weight: 500;
+      cursor: pointer;
+      box-shadow: var(--shadow-btn);
+      transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+    }
+    button:hover:not(:disabled) {
+      border-color: var(--border-hl);
+      background: #ffffff;
+      box-shadow: 0 2px 8px rgba(82,156,216,.18);
+      transform: translateY(-0.5px);
+    }
+    button:active:not(:disabled) {
+      transform: translateY(0);
+      box-shadow: var(--shadow-btn);
+    }
+    button.primary {
+      border: none;
+      background: linear-gradient(135deg, #64aee5 0%, var(--accent) 55%, var(--accent-deep) 100%);
+      color: #fff; font-weight: 600;
+      box-shadow: 0 2px 8px rgba(57,126,184,.28), inset 0 1px 0 rgba(255,255,255,.25);
+    }
+    button.primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, #5aa4de 0%, var(--accent-deep) 100%);
+      box-shadow: 0 3px 12px rgba(57,126,184,.35), inset 0 1px 0 rgba(255,255,255,.30);
+      transform: translateY(-0.5px);
+    }
+    button:disabled { opacity: .42; cursor: default; }
+    .spacer { flex: 1; }
+
+    /* ── 设置区 ── */
+    .settings {
+      min-width: 0; margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(165, 198, 228, 0.35);
+    }
+    .settings-head {
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 10px;
+      padding: 0;
+    }
+    .settings-head h2 { margin: 0; color: var(--text-1); font-size: 15px; font-weight: 650; }
+    .perf-hint { color: var(--text-3); font-size: 10.5px; font-weight: 400; }
+
+    /* ── Tab 导航 ── */
+    .tabs {
+      display: flex; gap: 2px;
+      padding: 12px 0 0;
+      border-bottom: 1.5px solid rgba(165, 198, 228, 0.30);
+    }
+    .tab {
+      min-height: 34px; padding: 0 16px;
+      border: 0; border-bottom: 2.5px solid transparent; border-radius: 0;
+      background: transparent; color: var(--text-3);
+      font-weight: 500;
+      box-shadow: none;
+      transition: color var(--transition), border-color var(--transition);
+    }
+    .tab:hover:not(:disabled) {
+      color: var(--text-2); background: transparent;
+      box-shadow: none; transform: none;
+    }
+    .tab.active {
+      border-bottom-color: var(--accent);
+      color: var(--accent-deep); font-weight: 650;
+    }
+    .tab-page { display: none; padding: 14px 0 0; }
+    .tab-page.active { display: block; }
+    .page-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+
+    /* ── 图片设置（结构与有封面图时完全一致） ── */
+    .image-settings { margin-top: 10px; }
+    .image-picker {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 10px; align-items: stretch;
+    }
+    .image-drop { min-height: 102px; flex-direction: column; gap: 8px; }
+    .image-drop.has-image { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+    .image-drop-controls {
+      display: flex; min-width: 0; flex-direction: column;
+      align-items: center; justify-content: center; gap: 8px;
+    }
+    .image-drop-preview {
+      position: relative; display: flex; min-width: 0;
+      flex-direction: column; align-items: center; justify-content: center;
+      gap: 5px;
+    }
+    .image-thumbnail { display: block; width: 100%; height: 72px; object-fit: contain; border-radius: 4px; }
+    
+    /* 彻底隐藏图片名与旧版无用区域 */
+    .image-drop-name,
+    #image-name,
+    #image-info-title,
+    #image-empty,
+    .image-info-title,
+    .image-empty {
+      display: none !important;
+    }
+
+    .remove-image {
+      position: absolute; top: -8px; right: -8px;
+      width: 24px; height: 24px; min-height: 24px; padding: 0;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      font-size: 15px;
+      box-shadow: 0 1px 4px rgba(70,130,185,.15);
+    }
+    .remove-image:hover {
+      background: #fff0f0;
+      color: #c0505a;
+      border-color: #f1c5c9;
+    }
+    .image-info {
+      display: flex; min-width: 0; min-height: 102px;
+      flex-direction: column; justify-content: center;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-m);
+      background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,247,254,0.70) 100%);
+      box-shadow: var(--shadow-card);
+    }
+
+    /* ── 表单 ── */
+    .field-home { display: contents; }
+    #image-width-slot { width: 100%; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+    .pagination-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 12px; margin-top: 10px; }
+    .field { display: grid; min-width: 0; gap: 5px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { color: var(--text-2); font-size: 11px; font-weight: 500; }
+    .field-hint { margin-left: 4px; color: var(--text-3); font-size: 10px; font-weight: 400; }
+    .page-margin-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .page-margin-item { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 6px; min-width: 0; }
+    .page-margin-item span { color: var(--text-3); font-size: 10.5px; white-space: nowrap; }
+
+    input, select, textarea {
+      width: 100%; min-width: 0; min-height: 32px;
+      padding: 5px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-s);
+      background: var(--card-bg);
+      color: var(--text-1); font: inherit; font-size: 12px;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    textarea { min-height: 92px; resize: vertical; line-height: 1.55; }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(82,156,216,.14);
+    }
+    input[type="range"]:focus { outline: none; border-color: transparent; box-shadow: none; }
+    input[type="checkbox"] { width: 16px; min-height: 16px; accent-color: var(--accent); }
+    input[type="color"] { height: 32px; padding: 3px; border-radius: var(--radius-s); }
+
+    /* 滑块 range */
+    input[type="range"] {
+      height: 22px; padding: 0; border: 0;
+      background: transparent; outline: none;
+      box-shadow: none; appearance: none; -webkit-appearance: none;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 6px; border-radius: 5px;
+      background: linear-gradient(
+        to right,
+        var(--accent) 0%, var(--accent) var(--range-progress, 33%),
+        rgba(165,198,228,.35) var(--range-progress, 33%), rgba(165,198,228,.35) 100%
+      );
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      width: 16px; height: 16px; margin-top: -5px;
+      border: 2.5px solid #fff; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 1px 4px rgba(57,126,184,.30);
+      appearance: none; -webkit-appearance: none;
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    input[type="range"]:active::-webkit-slider-thumb {
+      transform: scale(1.22);
+      box-shadow: 0 2px 8px rgba(57,126,184,.35);
+    }
+
+    .check-field { display: flex; align-items: center; gap: 8px; min-height: 32px; color: var(--text-2); font-size: 12px; }
+
+    /* ── 预览面板（启用独立硬件加速图层，滚动零卡顿） ── */
+    .preview-panel {
+      position: sticky; top: 48px; min-width: 0;
+      margin-top: 16px;
+      will-change: transform;
+      transform: translateZ(0);
+    }
+    .preview-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .preview-panel h2 {
+      margin: 0;
+      font-size: 13.5px; font-weight: 650;
+      color: var(--text-1);
+    }
+    .margin-guides-toggle { flex: 0 0 auto; min-height: 27px; padding: 0 9px; border-radius: 7px; color: #2d7dae; font-size: 10.5px; white-space: nowrap; }
+    .preview-wrap {
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: linear-gradient(145deg, rgba(215,233,250,0.85) 0%, rgba(198,222,246,0.65) 100%);
+      border: 1px solid rgba(165,198,228,0.45);
+      border-radius: var(--radius-l);
+      box-shadow: var(--shadow-card);
+    }
+    .preview {
+      position: relative; display: grid;
+      width: 100%;
+      max-width: 100%;
+      aspect-ratio: var(--preview-page-ratio, .70710678);
+      place-items: center; margin: 0 auto;
+      overflow: hidden;
+      border: 0;
+      border-radius: 4px;
+      background: #fff;
+      box-shadow: 0 4px 18px rgba(50,100,150,.10), 0 1px 3px rgba(50,100,150,.05);
+    }
+    .preview.cover-layout-2,
+    .preview.cover-layout-3 { background-color: #fbfaf8; background-image: radial-gradient(circle at 18% 22%, rgba(70,70,70,.018) 0 .5px, transparent .7px), radial-gradient(circle at 78% 66%, rgba(70,70,70,.016) 0 .45px, transparent .65px); background-size: 5.5px 4.8px, 7px 6px; }
+    .preview.cover-layout-4 { background-color: #fcfbf9; background-image: radial-gradient(circle at 24% 30%, rgba(80,80,80,.012) 0 .45px, transparent .65px); background-size: 6px 5.2px; }
+    .preview-content {
+      position: relative; z-index: 1;
+      display: flex; width: 100%; height: 100%;
+      flex-direction: column; align-items: center; justify-content: center;
+      padding: var(--preview-pad-top, 0px) var(--preview-pad-horizontal, 0px) var(--preview-pad-bottom, 0px);
+      font-size: calc(15.13px * var(--preview-page-scale, 1));
+      line-height: 1.57;
+      text-align: center;
+    }
+    .preview-template { position: relative; display: block; width: 100%; height: 100%; overflow: hidden; }
+    .preview-template-1 { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .preview-template-2,
+    .preview-template-3,
+    .preview-template-4 { color: #111; text-align: left; }
+    .preview-template-2 .preview-meta,
+    .preview-template-3 .preview-meta,
+    .preview-template-4 .preview-meta { display: grid; grid-template-rows: 1fr 1fr; align-items: center; }
+    .preview-template-2 .preview-meta.is-one,
+    .preview-template-3 .preview-meta.is-one,
+    .preview-template-4 .preview-meta.is-one { grid-template-rows: 1fr; }
+    .preview-meta-row { margin: 0; font-family: "Noto Serif SC Preview", "Microsoft YaHei", serif; font-size: var(--preview-cover-meta-size, 0px); line-height: 1.35; white-space: nowrap; }
+    .preview-2-title-group { position: absolute; top: 27%; left: 0; right: 0; text-align: center; }
+    .preview-2-title { margin: 0; color: #111; font-family: "Noto Serif SC Preview", "Microsoft YaHei", serif; font-size: var(--preview-cover-2-title-size, 0px); font-weight: 400; line-height: 1.12; }
+    .preview-2-rule { width: var(--preview-cover-rule-2-width, 0px); max-width: 100%; margin: 2.2em auto 0; border-top: .45px solid #111; }
+    .preview-2-meta { position: absolute; left: 50%; bottom: 14%; width: 62%; height: 18%; transform: translateX(-50%); text-align: center; justify-items: center; }
+    .preview-3-heading { position: absolute; top: 16%; left: 8.5%; width: 55%; }
+    .preview-3-title { margin: 0; color: #111; font-family: "Noto Serif SC Preview", "Microsoft YaHei", serif; font-size: var(--preview-cover-3-title-size, 0px); font-weight: 400; line-height: 1.05; }
+    .preview-3-subtitle { margin: .16em 0 0; color: #111; font-family: "Noto Serif SC Preview", "Microsoft YaHei", serif; font-size: var(--preview-cover-3-subtitle-size, 0px); line-height: 1.12; }
+    .preview-3-subtitle:empty { display: none; }
+    .preview-3-network { position: absolute; right: 0; bottom: 0; width: 64%; height: 68%; overflow: visible; }
+    .preview-3-meta { position: absolute; left: 9%; bottom: 9%; width: 42%; height: 18%; }
+    .preview-4-frame { position: absolute; top: var(--preview-frame-top, 0px); right: var(--preview-frame-horizontal, 0px); bottom: var(--preview-frame-bottom, 0px); left: var(--preview-frame-horizontal, 0px); border: .38px solid #222; outline: .22px solid #222; outline-offset: -1.4px; }
+    .preview-4-title { position: absolute; top: 29%; left: 0; right: 0; margin: 0; color: #111; font-family: "Noto Serif SC Preview", "Microsoft YaHei", serif; font-size: var(--preview-cover-4-title-size, 0px); font-weight: 400; line-height: 1.15; text-align: center; }
+    .preview-4-meta { position: absolute; left: 50%; bottom: 14%; width: 64%; height: 19%; transform: translateX(-50%); text-align: center; justify-items: center; }
+    .preview-4 .preview-meta-row { font-size: var(--preview-cover-4-meta-size, 0px); }
+    .preview-image { display: none; width: var(--preview-width, 78%); max-width: none; height: auto; flex-shrink: 0; object-fit: contain; margin: 0 auto 2.4em; }
+    .preview-title { max-width: 100%; margin: 0; overflow-wrap: anywhere; word-break: break-word; hyphens: none; -webkit-hyphens: none; hyphenate-character: ""; text-align-last: center; color: #1f2328; font-family: "Noto Serif SC Preview", "Microsoft YaHei", serif; font-size: var(--preview-cover-title-size, 0px); font-weight: 700; line-height: var(--preview-cover-title-line-height, 0px); }
+    .preview-subtitle { max-width: 100%; margin: 1.4em 0 2.4em; overflow-wrap: anywhere; color: #1f2328; font-family: "Noto Serif SC Preview", "Microsoft YaHei", serif; font-size: var(--preview-cover-subtitle-size, 0px); line-height: 1.2; }
+    .preview-rule { width: var(--preview-cover-rule-1-width, 0px); max-width: 100%; border-top: calc(1.1px * var(--preview-page-scale, 1)) solid #111; margin: 0 auto 1.1em; }
+    .preview-link-wrap { margin: 0; font-size: var(--preview-cover-link-size, 0px); }
+    .preview-link { color: #06c; font-style: italic; cursor: pointer; text-decoration: none; } .preview-link:hover { text-decoration: underline; } .preview-link[aria-disabled="true"] { cursor: default; text-decoration: none; }
+
+    .watermark-preview { position: absolute; z-index: 2; display: none; inset: 0; overflow: hidden; pointer-events: none; }
+    .watermark-preview canvas { display: block; width: 100%; height: 100%; }
+    .preview-margin-guides { position: absolute; z-index: 3; inset: 0; pointer-events: none; }
+    .preview-margin-guides span { position: absolute; display: block; border-color: #35b7eb; border-style: dashed; border-width: 0; }
+    .preview-margin-guides .guide-top { left: 0; right: 0; top: var(--preview-pad-top, 0px); border-top-width: 1px; }
+    .preview-margin-guides .guide-bottom { left: 0; right: 0; bottom: var(--preview-pad-bottom, 0px); border-top-width: 1px; }
+    .preview-margin-guides .guide-left { top: 0; bottom: 0; left: var(--preview-pad-horizontal, 0px); border-left-width: 1px; }
+    .preview-margin-guides .guide-right { top: 0; bottom: 0; right: var(--preview-pad-horizontal, 0px); border-left-width: 1px; }
+
+    .value-label { display: flex; justify-content: space-between; color: var(--text-2); font-size: 11px; }
+    .note { margin: 10px 0 0; color: var(--text-3); font-size: 10px; line-height: 1.5; }
+
+    /* ── 界面错误提示弹窗 ── */
+    .message-backdrop {
+      position: fixed; z-index: 2000; inset: 0;
+      display: grid; place-items: center; padding: 24px;
+      background: rgba(25, 55, 80, 0.16);
+      opacity: 0; visibility: hidden; pointer-events: none;
+      transition: opacity .16s ease, visibility 0s linear .16s;
+    }
+    .message-backdrop.is-open {
+      opacity: 1; visibility: visible; pointer-events: auto;
+      transition-delay: 0s;
+    }
+    .message-card {
+      display: flex; width: min(440px, calc(100vw - 40px)); min-height: 148px;
+      max-height: min(80vh, 620px); flex-direction: column; align-items: center; justify-content: center;
+      gap: 18px; padding: 28px 26px 20px; overflow: auto;
+      opacity: 0; transform: translateY(5px) scale(.985); contain: layout paint;
+      border: 1.5px solid rgba(89, 155, 213, 0.46); border-radius: var(--radius-l);
+      background: linear-gradient(135deg, rgba(220, 238, 255, 0.96) 0%, rgba(181, 217, 246, 0.88) 100%);
+      box-shadow: inset 0 1px 2px rgba(255,255,255,.90), 0 16px 38px rgba(35,78,115,.22);
+      transition: opacity .16s ease, transform .16s cubic-bezier(.2,.75,.25,1);
+    }
+    .message-backdrop.is-open .message-card {
+      opacity: 1; transform: translateY(0) scale(1);
+    }
+    .message-text { width: 100%; color: var(--text-1); font-size: 13px; line-height: 1.65; text-align: center; white-space: pre-line; overflow-wrap: anywhere; }
+    .message-link { color: var(--accent-deep); font-size: 13px; font-weight: 650; text-decoration: underline; text-underline-offset: 3px; }
+    .message-spinner { width: 28px; height: 28px; border: 3px solid rgba(57, 126, 184, .2); border-top-color: var(--accent-deep); border-radius: 50%; animation: update-spin .75s linear infinite; }
+    .message-actions { display: flex; justify-content: center; gap: 12px; }
+    .message-actions button { min-width: 106px; }
+    .message-update { border-color: rgba(57, 126, 184, .48); background: linear-gradient(180deg, #d8edff 0%, #b6d8f4 100%); color: #245e8d; }
+    .message-close { min-width: 92px; margin-top: 2px; }
+    .message-close:focus,
+    .message-close:focus-visible { outline: none; box-shadow: var(--shadow-btn); }
+    @keyframes update-spin { to { transform: rotate(360deg); } }
+
+    /* ── 滚动条美化 ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(130,170,210,.35); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(100,150,200,.50); }
+
+    /* ── 响应式 ── */
+    @media (max-width: 760px) {
+      body { min-width: 0; padding: 16px; }
+      .workspace { grid-template-columns: 1fr; }
+      .left-column { min-height: 0; }
+      .preview-panel { position: static; }
+      .pagination-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="window-drag-strip" aria-hidden="true"></div>
+  <main>
+    <header><img class="mark" src="../../../ico/mtopb.png" alt="MtoPB"><h1>MtoPB<span class="app-version" id="app-version"></span></h1><div class="header-actions"><div class="language-menu"><button id="language-toggle" type="button" aria-haspopup="true" aria-expanded="false">Language</button><div class="language-options" id="language-options" hidden><button type="button" data-language="zh">Chinese</button><button type="button" data-language="en">English</button></div></div><button id="check-updates" type="button">检查更新</button></div></header>
+    <div class="workspace">
+      <div class="left-column">
+        <section class="section">
+          <div class="section-head"><h2>Markdown 文件</h2><span class="hint">选择或拖放一个或多个文件，多个文件时文件名需要使用“数字-名称.md”格式</span></div>
+          <div class="markdown-picker" id="markdown-picker">
+            <div class="drop-zone file-drop" id="drop-zone" data-drop-target="markdown"><button id="select-files">选择文件</button><span class="drop-copy">或拖放 .md / .markdown 文件到这里</span></div>
+            <div class="file-panel" id="file-panel" hidden=""><div class="file-panel-head"><span class="file-panel-title">已选文件</span><span class="count" id="file-count">（0个文件）</span><button class="clear-files" id="clear-files" type="button">清空文件</button></div><div class="list-shell"><div id="empty-files">尚未添加文件</div><div id="file-list" hidden=""></div></div></div>
+          </div>
+        </section>
+      <section class="settings" id="settings">
+        <div class="settings-head"><h2>文档设置</h2><button id="reset-all" type="button">全部恢复默认</button></div>
+        <nav class="tabs" aria-label="文档设置">
+          <button class="tab active" data-tab="cover">封面</button>
+          <button class="tab" data-tab="watermark">水印</button>
+          <button class="tab" data-tab="layout">页面</button>
+          <button class="tab" data-tab="metadata">PDF 元数据</button>
+        </nav>
+        <section class="tab-page active" data-page="cover">
+          <div class="form-grid">
+            <div class="field full"><label for="cover-select">封面类型</label><select id="cover-select"><option value="1">封面 1</option></select></div>
+          </div>
+          <div id="template-cover-settings">
+          <div class="form-grid">
+            <div class="field" id="main-title-field"><label for="main-title" id="main-title-label">主标题</label><input id="main-title" type="text" placeholder="请输入主标题"></div>
+            <div class="field" id="subtitle-field"><label for="subtitle">副标题</label><input id="subtitle" type="text" placeholder="请输入副标题"></div>
+            <div class="field" id="author-field"><label for="author">作者</label><input id="author" type="text" placeholder="请输入作者"></div>
+            <div class="field" id="date-field"><label for="date">日期</label><input id="date" type="text" placeholder="请输入日期"></div>
+            <div id="template-link-settings" class="contents">
+              <div class="field full"><label for="link-url">链接地址</label><input id="link-url" type="url" placeholder="请输入链接地址"></div>
+              <div class="field"><label for="link-text">链接显示文字</label><input id="link-text" type="text" placeholder="请输入链接显示文字"></div>
+              <div class="field"><label for="link-color">链接显示文字颜色</label><input id="link-color" type="color" value="#06c"></div>
+            </div>
+            <label class="check-field field" id="use-image-field"><input id="use-image" type="checkbox"><span>封面使用图片</span></label>
+            <div class="field-home" id="image-width-home"></div>
+            <div class="field" id="cover4-frame-settings" hidden><label>封面矩形距离（cm）<span class="field-hint">相对页边距外圈</span></label><div class="page-margin-grid"><label class="page-margin-item"><span>上</span><input id="frame-top" type="number" min="0" step="0.1" aria-label="矩形上距离"></label><label class="page-margin-item"><span>左右</span><input id="frame-horizontal" type="number" min="0" step="0.1" aria-label="矩形左右距离"></label><label class="page-margin-item"><span>下</span><input id="frame-bottom" type="number" min="0" step="0.1" aria-label="矩形下距离"></label></div></div>
+          </div>
+          <div class="image-settings" id="image-settings">
+            <div class="image-picker">
+              <div class="drop-zone image-drop" id="image-drop" data-drop-target="image"><div class="image-drop-controls"><button id="select-image" type="button">选择图片</button><span class="drop-copy">或拖放图片到这里</span></div><div class="image-drop-preview" id="image-drop-preview" hidden><img class="image-thumbnail" id="image-thumbnail" alt="封面图片预览"><span class="image-drop-name" id="image-name">mtopb.png</span><button type="button" class="remove-image" id="remove-image" title="移除图片" aria-label="移除图片">×</button></div></div>
+              <div class="image-info"><div class="image-info-title" id="image-info-title" hidden="">当前图片</div><div class="image-empty" id="image-empty" hidden="">尚未添加图片</div><div id="image-width-slot"><div class="field" id="image-width-field"><label for="image-width">图片宽度（%）<span class="field-hint">≤100</span></label><input id="image-width" type="number" min="1" max="100" step="1" placeholder="请输入图片宽度"></div></div></div>
+            </div>
+          </div>
+          </div>
+          <div class="custom-cover-settings" id="custom-cover-settings" hidden>
+            <div class="drop-zone image-drop custom-cover-drop" id="custom-cover-drop" data-drop-target="custom-cover">
+              <div class="image-drop-controls"><button id="select-cover-pdf" type="button">选择文件</button><span class="drop-copy">或拖放一页 PDF 封面到这里</span></div>
+              <div class="custom-cover-info" id="custom-cover-info" hidden><span id="custom-cover-name"></span><button type="button" class="remove-image" id="remove-cover-pdf" title="移除封面 PDF" aria-label="移除封面 PDF">×</button></div>
+            </div>
+            <p class="hint custom-cover-hint">仅支持 1 页 PDF。封面 PDF 的纸张大小应与“页面”中的纸张大小一致，否则合并后的尺寸效果可能不一致。自定义封面会按上传的 PDF 整页原样使用，不受“页面”中的页边距设置影响。</p>
+          </div>
+          <div class="page-actions"><button type="button" id="reset-current-cover">恢复本封面默认</button><button type="button" data-reset="cover">恢复本页默认</button></div>
+        </section>
+        <section class="tab-page" data-page="watermark">
+          <label class="check-field"><input id="watermark-enabled" type="checkbox"><span>为整本 PDF 添加水印（水印不受“页面”中的页边距设置影响）</span></label>
+          <div class="form-grid watermark-settings" id="watermark-settings" hidden="">
+            <div class="field full"><label for="watermark-style">水印样式</label><select id="watermark-style"><option value="diagonal-up">斜排居中（左低右高）</option><option value="diagonal">斜排居中（左高右低）</option><option value="center">水平居中</option><option value="tiled-up">错行排列（左低右高）</option><option value="tiled">错行排列（左高右低）</option><option value="tiled-horizontal">错行排列（水平）</option></select></div>
+            <div class="field full"><label for="watermark-text">水印文字</label><input id="watermark-text" type="text"></div>
+            <div class="field"><label for="watermark-color">水印颜色</label><input id="watermark-color" type="color"></div>
+            <div class="field"><label for="watermark-size">字号（pt）<span class="field-hint" id="watermark-size-hint" hidden="">为防止卡顿，pt≥12</span></label><input id="watermark-size" type="number"></div>
+            <div class="field full"><div class="value-label"><label for="watermark-transparency">透明度</label><span id="transparency-value"></span></div><input id="watermark-transparency" type="range" min="0" max="100"></div>
+          </div>
+          <div class="page-actions"><button type="button" data-reset="watermark">恢复本页默认</button></div>
+        </section>
+        <section class="tab-page" data-page="layout">
+          <label class="check-field"><input id="code-line-numbers" type="checkbox"><span>代码块显示行号</span></label>
+          <div class="form-grid">
+            <div class="field"><label for="toc-title">目录标题</label><input id="toc-title" type="text"></div>
+            <div class="field"><label for="toc-depth">目录最大层级</label><select id="toc-depth"><option value="1">1 级</option><option value="2">2 级</option><option value="3">3 级</option><option value="4">4 级</option><option value="5">5 级</option><option value="6">6 级</option></select></div>
+            <div class="field"><label for="page-size">纸张大小</label><select id="page-size"><option value="A3">A3</option><option value="A4">A4</option><option value="A5">A5</option><option value="Letter">美式信纸（Letter）</option><option value="Legal">美式法律用纸（Legal）</option></select></div>
+            <div class="field"><label>页边距（cm）</label><div class="page-margin-grid"><label class="page-margin-item"><span>上</span><input id="page-margin-top" type="number" min="0" step="0.1" aria-label="上边距"></label><label class="page-margin-item"><span>左右</span><input id="page-margin-horizontal" type="number" min="0" step="0.1" aria-label="左右边距"></label><label class="page-margin-item"><span>下</span><input id="page-margin-bottom" type="number" min="0" step="0.1" aria-label="下边距"></label></div></div>
+            <div class="field"><label for="page-number-start">页码计数规则</label><select id="page-number-start"><option value="cover">从封面开始</option><option value="toc">从目录开始</option><option value="body">从正文开始</option></select></div>
+            <div class="field"><label for="link-annotation-color">正文链接文字颜色<span class="field-hint">封面和目录除外</span></label><input id="link-annotation-color" type="color"></div>
+          </div>
+          <div class="pagination-grid">
+            <div class="field"><label for="image-pagination">图片</label><select id="image-pagination"><option value="auto">允许跨页</option><option value="avoid">尽量不跨页</option></select></div>
+            <div class="field"><label for="code-block-pagination">代码块</label><select id="code-block-pagination"><option value="auto">允许跨页</option><option value="avoid">尽量不跨页</option></select></div>
+            <div class="field"><label for="table-pagination">表格</label><select id="table-pagination"><option value="auto">允许跨页</option><option value="avoid">尽量不跨页</option></select></div>
+          </div>
+          <div class="page-actions"><button type="button" data-reset="layout">恢复本页默认</button></div>
+        </section>
+        <section class="tab-page" data-page="metadata">
+          <p class="note" style="margin-top:0">以下内容会写入生成 PDF 的文档属性，可在 PDF 阅读器的“属性”或“文档信息”中查看。不会显示在封面或正文页面上。</p>
+          <div class="form-grid">
+            <div class="field"><label for="pdf-metadata-title">标题</label><input id="pdf-metadata-title" type="text" placeholder="请输入标题"></div>
+            <div class="field"><label for="pdf-metadata-author">作者</label><input id="pdf-metadata-author" type="text" placeholder="请输入作者"></div>
+            <div class="field full"><label for="pdf-metadata-subject">主题</label><input id="pdf-metadata-subject" type="text" placeholder="请输入主题"></div>
+            <div class="field full"><label for="pdf-metadata-keywords">关键字</label><textarea id="pdf-metadata-keywords" placeholder="请输入关键字"></textarea><span class="field-hint">支持用中文逗号、英文逗号或换行分隔多个关键字</span></div>
+          </div>
+          <div class="page-actions"><button type="button" data-reset="metadata">恢复本页默认</button></div>
+        </section>
+      </section>
+        <div class="track"><div id="progress"></div></div>
+        <section class="section" style="display:flex;flex:1;flex-direction:column;margin-top:0"><div class="section-head"><h2>转换日志 <span class="perf-hint">参考耗时：约1230页的算法竞赛资料(代码块偏多)，代码块不显示行号约2分20秒，代码块显示行号约4分30秒</span></h2></div><pre id="log"></pre></section>
+        <footer><button id="view-log">查看日志</button><span class="spacer"></span><button id="open-pdf" disabled="">打开 PDF</button><button class="primary" id="start-build" disabled="">开始转换</button></footer>
+      </div>
+      <aside class="preview-panel">
+        <div class="preview-heading"><h2>封面和水印预览（效果与预览可能有细节上的出入）</h2><button type="button" class="margin-guides-toggle" id="toggle-margin-guides" aria-pressed="false">显示页边距线</button></div>
+        <div class="preview-wrap">
+          <div class="preview" id="cover-preview">
+            <div class="preview-content">
+              <div class="preview-template preview-template-1" id="preview-template-1"><img class="preview-image" id="preview-image" alt=""><h3 class="preview-title" id="preview-title">MtoPB</h3><p class="preview-subtitle" id="preview-subtitle">GeorgeNaNN</p><div class="preview-rule"></div><p class="preview-link-wrap"><a class="preview-link" id="preview-link" href="#" rel="noreferrer"></a></p></div>
+              <div class="preview-template preview-template-2" id="preview-template-2" hidden><div class="preview-2-title-group"><h3 class="preview-2-title" id="preview-2-title">标题</h3><div class="preview-2-rule"></div></div><div class="preview-meta preview-2-meta" id="preview-2-meta"><p class="preview-meta-row" id="preview-2-author" hidden></p><p class="preview-meta-row" id="preview-2-date" hidden></p></div></div>
+              <div class="preview-template preview-template-3" id="preview-template-3" hidden><div class="preview-3-heading"><h3 class="preview-3-title" id="preview-3-title">主标题</h3><p class="preview-3-subtitle" id="preview-3-subtitle">副标题</p></div><svg class="preview-3-network" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#363636" stroke-width=".22" vector-effect="non-scaling-stroke"><path d="M63 4 L73 10 L79 23 L86 18 L92 4 L85 22 L93 14 L100 27"/><path d="M73 10 L82 30 L77 42 L82 49 L87 58 L100 52"/><path d="M63 4 L72 25 L80 34 L75 44 L62 50 L58 62 L46 69 L41 61 L31 66"/><path d="M31 66 L43 73 L48 85 L57 100"/><path d="M43 73 L62 65 L73 75 L78 88 L89 96"/><path d="M62 65 L46 73 L58 62 L65 34 L72 25"/><path d="M65 34 L77 42 L82 49 L73 75"/><path d="M13 62 L24 63 L46 69 L62 65"/><path d="M24 63 L31 66 L41 61"/></g><g fill="#282828"><circle cx="63" cy="4" r=".42"/><circle cx="72" cy="25" r=".42"/><circle cx="80" cy="34" r=".42"/><circle cx="75" cy="44" r=".42"/><circle cx="87" cy="58" r=".42"/><circle cx="82" cy="49" r=".42"/><circle cx="65" cy="34" r=".42"/><circle cx="62" cy="65" r=".42"/><circle cx="73" cy="75" r=".42"/><circle cx="78" cy="88" r=".42"/><circle cx="89" cy="96" r=".42"/><circle cx="57" cy="100" r=".42"/><circle cx="48" cy="85" r=".42"/><circle cx="43" cy="73" r=".42"/><circle cx="31" cy="66" r=".42"/><circle cx="41" cy="61" r=".42"/><circle cx="46" cy="69" r=".42"/><circle cx="13" cy="62" r=".42"/><circle cx="24" cy="63" r=".42"/></g></svg><div class="preview-meta preview-3-meta" id="preview-3-meta"><p class="preview-meta-row" id="preview-3-author" hidden></p><p class="preview-meta-row" id="preview-3-date" hidden></p></div></div>
+              <div class="preview-template preview-template-4" id="preview-template-4" hidden><div class="preview-4-frame" id="preview-4-frame"><h3 class="preview-4-title" id="preview-4-title">标题</h3><div class="preview-meta preview-4-meta" id="preview-4-meta"><p class="preview-meta-row" id="preview-4-author" hidden></p><p class="preview-meta-row" id="preview-4-date" hidden></p></div></div></div>
+            </div>
+            <div class="watermark-preview" id="preview-watermark"></div>
+            <div class="custom-cover-preview" id="custom-cover-preview" hidden><canvas class="custom-cover-canvas" id="custom-cover-canvas" aria-label="自定义封面预览" hidden></canvas><div class="custom-cover-message empty-custom-cover" id="custom-cover-message">请上传自定义封面</div></div>
+            <div class="preview-margin-guides" id="preview-margin-guides" hidden aria-hidden="true"><span class="guide-top"></span><span class="guide-right"></span><span class="guide-bottom"></span><span class="guide-left"></span></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+  <div class="message-backdrop" id="message-modal" hidden>
+    <div class="message-card" role="alertdialog" aria-modal="true" aria-labelledby="message-text">
+      <div class="message-spinner" id="message-spinner" hidden aria-label="正在检查更新"></div>
+      <p class="message-text" id="message-text"></p>
+      <a class="message-link" id="message-link" href="https://github.com/GeorgeNaNN/MtoPB/releases" hidden>MtoPB/releases</a>
+      <div class="message-actions" id="message-update-actions" hidden><button type="button" id="message-later">下次再说</button><button type="button" class="message-update" id="message-update">立即更新</button></div>
+      <button type="button" class="message-close" id="message-close">确认</button>
+    </div>
+  </div>
+  <script>
+    const log = document.getElementById("log"), progress = document.getElementById("progress"), progressTrack = progress.parentElement, fileList = document.getElementById("file-list"), emptyFiles = document.getElementById("empty-files"), startButton = document.getElementById("start-build"), selectFilesButton = document.getElementById("select-files"), openPdf = document.getElementById("open-pdf"), dropZone = document.getElementById("drop-zone");
+    const el = id => document.getElementById(id);
+    let selectedFiles = [], busy = false, config = null, defaults = null, language = "zh", imageRequest = 0, previewImagePath = null, coverPdfPreviewPath = null, coverPdfRequestedPath = null, coverPdfRequest = 0, coverPdfDimensions = null, coverPdfDocument = null, coverPdfRenderTask = null, coverPdfRenderedSize = "";
+    const translations = {
+      "检查更新":"Check for updates", "Markdown 文件":"Markdown Files", "选择或拖放一个或多个文件，多个文件时文件名需要使用“数字-名称.md”格式":"Select or drop one or more files. For multiple files, name them “number-name.md”", "选择文件":"Choose Files", "或拖放 .md / .markdown 文件到这里":"or drop .md / .markdown files here", "已选文件":"Selected Files", "0 个文件":"0 files", "清空文件":"Clear Files", "尚未添加文件":"No files added", "文档设置":"Document Settings", "全部恢复默认":"Reset All", "封面":"Cover", "水印":"Watermark", "页面":"Page", "PDF 元数据":"PDF Metadata", "封面类型":"Cover Type", "封面 1":"Cover 1", "主标题":"Main Title", "请输入主标题":"Enter a main title", "副标题":"Subtitle", "请输入副标题":"Enter a subtitle", "作者":"Author", "请输入作者":"Enter an author", "日期":"Date", "请输入日期":"Enter a date", "链接地址":"Link URL", "请输入链接地址":"Enter a link URL", "链接显示文字":"Link Text", "请输入链接显示文字":"Enter link text", "链接显示文字颜色":"Link Text Color", "封面使用图片":"Use an image on the cover", "图片宽度（%）":"Image Width (%)", "留白":"Spacing", "上":"Top", "左右":"Left / Right", "下":"Bottom", "选择图片":"Choose Image", "或拖放图片到这里":"or drop an image here", "移除图片":"Remove Image", "当前图片":"Current Image", "尚未添加图片":"No image selected", "图片宽度（%）":"Image Width (%)", "请输入图片宽度":"Enter image width", "选择一页 PDF 封面":"Choose a one-page PDF cover", "或拖放一页 PDF 到这里":"or drop a one-page PDF here", "移除自定义封面 PDF":"Remove custom cover PDF", "仅支持 1 页 PDF。封面 PDF 的纸张大小应与“页面”中的纸张大小一致，否则合并后的尺寸效果可能不一致。自定义封面会按上传的 PDF 页面原样使用，不能受“页面”中的页边距影响。":"Only one-page PDFs are supported. The cover PDF should use the same paper size selected under Page. Otherwise, the merged page size may differ. The custom cover is used as uploaded and is not affected by page margins.", "恢复本封面默认":"Reset This Cover", "为整本 PDF 添加水印（水印不受“页面”中的页边距设置影响）":"Add a watermark to the entire PDF (page margin settings do not affect the watermark)", "水印样式":"Watermark Style", "斜向居中（角度较高）":"Diagonal Center (steeper)", "斜向居中（角度较低）":"Diagonal Center (shallower)", "水平平铺":"Horizontal Tile", "平铺斜向（角度较高）":"Diagonal Tile (steeper)", "平铺斜向（角度较低）":"Diagonal Tile (shallower)", "平铺横向（水平）":"Horizontal Tile", "水印文字":"Watermark Text", "水印颜色":"Watermark Color", "字号（pt）":"Font Size (pt)", "为防止遮盖，建议不超过 12":"To avoid obscuring content, 12 or less is recommended", "透明度":"Opacity", "恢复本页默认":"Reset This Page", "目录标题":"Table of Contents Title", "目录深度":"Table of Contents Depth", "1 级":"Level 1", "2 级":"Level 2", "3 级":"Level 3", "4 级":"Level 4", "5 级":"Level 5", "6 级":"Level 6", "纸张大小":"Paper Size", "标准信纸（Letter）":"Letter", "标准法律纸（Legal）":"Legal", "页边距（cm）":"Page Margins (cm)", "上边距":"Top margin", "左":"Left", "右边距":"Right margin", "右":"Right", "下边距":"Bottom margin", "页码计数规则":"Page Numbering", "从封面开始":"Start from Cover", "从目录开始":"Start from Table of Contents", "从正文开始":"Start from Body", "链接注解颜色":"Link Annotation Color", "分页规则":"Pagination Rules", "图片":"Images", "代码块":"Code Blocks", "表格":"Tables", "允许跨页":"Allow page breaks", "尽量不跨页":"Avoid page breaks", "PDF 元数据会被写入生成的 PDF 文档属性，可在 PDF 阅读器的“文档属性”或“文档信息”中查看，不会显示在 PDF 页面上。":"PDF metadata is written to the generated document properties. You can view it in a PDF reader’s Document Properties or Document Info; it does not appear on the pages.", "标题":"Title", "请输入标题":"Enter a title", "请输入主题":"Enter a subject", "主题":"Subject", "关键字":"Keywords", "请输入关键字":"Enter keywords", "支持使用英文逗号、中文逗号或分号分隔多个关键字":"Separate keywords with commas or semicolons.", "转换日志":"Conversion Log", "参考耗时：约1230页的算法竞赛资料（代码块偏多），代码块不显示行号约2分20秒，代码块显示行号约4分30秒":"Reference time: about 2m 20s for a 1,230-page contest handout with many code blocks and no code line numbers, and about 4m 30s with line numbers in code blocks", "查看日志":"View Log", "打开 PDF":"Open PDF", "开始转换":"Start Conversion", "封面和水印预览（效果与预览可能有细节上的出入）":"Cover and Watermark Preview (the final PDF may differ slightly)", "显示页边距线":"Show Margin Guides", "关闭页边距线":"Hide Margin Guides", "请输入自定义封面":"Upload a custom cover", "PDF 封面预览无法加载":"Unable to load PDF cover preview", "正在加载封面预览…":"Loading cover preview…", "请上传自定义封面":"Upload a custom cover", "下次再说":"Later", "立即更新":"Update Now", "确认":"OK", "正在检查更新…":"Checking for updates…", "当前已是最新版本":"You are using the latest version", "发现新版本":"A new version is available", "操作失败":"The operation failed", "还没有可查看的转换日志":"No conversion log is available", "PDF 尚未生成":"The PDF has not been generated yet", "选择封面图片":"Choose a cover image", "选择文件夹":"Choose a folder", "添加文件":"Add files", "选择 PDF 保存位置和文件名":"Choose PDF save location and file name", "保存并开始转换":"Save and Start Conversion", "PDF 文件":"PDF Files", "图片不存在或格式不支持":"The image does not exist or its format is unsupported", "自定义封面只支持 PDF 文件":"Custom covers must be PDF files", "自定义封面 PDF 必须恰好包含 1 页":"The custom cover PDF must contain exactly one page", "请先选择 Markdown 文件":"Select Markdown files first", "请一次添加一个 PDF 封面":"Add one PDF cover at a time", "请一次添加一张封面图片":"Add one cover image at a time", "无法打开 PDF 保存对话框":"Unable to open the PDF save dialog", "设置保存失败":"Unable to save settings", "配置文件错误":"Configuration file error", "Markdown 内容或配置校验错误":"Markdown content or configuration validation error", "自定义封面 PDF 错误":"Custom cover PDF error", "PDF 渲染错误":"PDF rendering error", "文件访问错误":"File access error", "未知错误":"Unknown error"
+    };
+    Object.assign(translations, {
+      "封面 2":"Cover 2", "封面 3":"Cover 3", "封面 4":"Cover 4", "自定义封面":"Custom Cover", "封面使用图片":"Use an image on the cover", "封面矩形距离（cm）":"Cover Frame Distance (cm)", "相对页边距外圈":"Measured from the outside of the page margins", "矩形上距离":"Top frame distance", "矩形左右距离":"Left/right frame distance", "矩形下距离":"Bottom frame distance", "封面图片预览":"Cover image preview", "或拖放一页 PDF 封面到这里":"or drop a one-page PDF cover here", "移除封面 PDF":"Remove PDF cover", "仅支持 1 页 PDF。封面 PDF 的纸张大小应与“页面”中的纸张大小一致，否则合并后的尺寸效果可能不一致。自定义封面会按上传的 PDF 整页原样使用，不受“页面”中的页边距设置影响。":"Only one-page PDFs are supported. The cover PDF should use the same paper size selected under Page. Otherwise, the merged page size may differ. The custom cover is used as uploaded and is not affected by page margins.",
+      "斜排居中（左低右高）":"Centered diagonal (rising)", "斜排居中（左高右低）":"Centered diagonal (falling)", "水平居中":"Centered horizontal", "错行排列（左低右高）":"Staggered diagonal (rising)", "错行排列（左高右低）":"Staggered diagonal (falling)", "错行排列（水平）":"Staggered horizontal", "为防止卡顿，pt≥12":"To avoid lag, use at least 12 pt", "代码块显示行号":"Show line numbers in code blocks", "目录最大层级":"Maximum Table of Contents Level", "美式信纸（Letter）":"US Letter", "美式法律用纸（Legal）":"US Legal", "显示页边距线":"Show Margin Guides", "自定义封面预览":"Custom cover preview", "PDF 元数据会被写入生成的 PDF 文档属性，可在 PDF 阅读器的“文档属性”或“文档信息”中查看。不会显示在封面或正文页面上。":"PDF metadata is written to the generated document properties. View it in a PDF reader's Document Properties or Document Info. It does not appear on the cover or body pages.", "支持用中文逗号、英文逗号或换行分隔多个关键字":"Separate keywords with Chinese commas, English commas, or line breaks.",
+      "图片不可用，请重新选择":"Image unavailable. Please choose it again", "移除此文件":"Remove this file", "正在检查更新":"Checking for updates", "语言":"Language", "Chinese":"简体中文", "English":"英语", "选择封面":"Choose Cover", "纵向":"Portrait", "横向":"Landscape", "自定义尺寸":"Custom size", "封面仍会保留并使用，但合并后的尺寸效果可能不一致":"The cover will still be retained and used, but the merged page size may differ", "自定义封面纸张与页面设置不一致":"The custom cover paper size does not match the page setting", "实际尺寸":"Actual size", "当前页面":"Selected page", "（纵向，":" (Portrait, ", "）":" )", "封面为":"Cover: ", "；当前页面为":"; selected page: ", "pt；":" pt; ", "）：":" ): ", "正文链接文字颜色":"Body Link Annotation Color", "封面和目录除外":"Excludes the cover and table of contents", "左右边距":"Left/right margin", "下边距":"Bottom margin", "上边距":"Top margin", "以下内容会写入生成 PDF 的文档属性，可在 PDF 阅读器的“属性”或“文档信息”中查看。不会显示在封面或正文页面上。":"The information below is saved in the generated PDF's document properties. View it in a PDF reader's Properties or Document Info. It does not appear on the cover or body pages.", "支持用中文逗号、英文逗号或换行分隔多个关键字":"Separate keywords with Chinese commas, English commas, or line breaks.",
+      "正在加载封面预览…":"Loading cover preview…", "PDF 封面预览无法加载":"Unable to load PDF cover preview", "请上传自定义封面":"Upload a custom cover", "发现新版本":"A new version is available", "当前已是最新版本":"You are using the latest version", "检查更新失败":"Update check failed", "无法打开转换日志":"Unable to open the conversion log", "当前版本":"Current version", "发现新版本 ":"A new version is available: ", "，当前版本 ":"; current version: ", "当前已是最新版本（":"You are using the latest version (", "）":" )",
+      "为整本 PDF 添加水印（水印不受“页面”中的页边距设置影响）":"Add a watermark to the entire PDF (page margin settings do not affect the watermark)", "PDF 文件":"PDF files", "图片文件":"Image files", "Markdown 文件":"Markdown files", "拖放文件到这里":"Drop files here", "（0个文件）":"(0 files)", "多个文件时文件名需要使用“数字-名称.md”格式":"For multiple files, use the “number-name.md” naming format", "不是有效的 Markdown 文件":"Not a valid Markdown file", "找不到主目录中的 config.yml。":"The root config.yml file was not found", "自定义封面只支持 PDF 文件。":"Custom covers must be PDF files", "找不到所选的封面 PDF。":"The selected cover PDF was not found", "自定义封面 PDF 必须恰好包含 1 页。":"The custom cover PDF must contain exactly one page", "未收到有效的设置。":"No valid settings were received", "请一次添加一个 PDF 封面。":"Add one PDF cover at a time", "请一次添加一张封面图片。":"Add one cover image at a time", "请先选择 Markdown 文件。":"Select Markdown files first", "无法打开 PDF 保存对话框。":"Unable to open the PDF save dialog", "图片不存在或格式不支持。":"The image does not exist or its format is unsupported", "没有找到与配置编号对应的封面模板。":"No cover template matches the configured ID", "已保存的封面编号在 config.yml 中不存在。":"The saved cover ID does not exist in config.yml", "配置中的 selected_cover 没有对应的封面模板。":"No cover template matches selected_cover in the configuration", "至少需要保留一个封面配置。":"At least one cover configuration must be retained", "当前封面编号必须是正整数。":"The current cover ID must be a positive integer", "封面编号必须是正整数。":"Cover IDs must be positive integers", "封面编号不能重复。":"Cover IDs must be unique"
+    });
+    const originalTextNodes = new WeakMap();
+    const originalAttributes = new WeakMap();
+    function tr(value) {
+      const text = String(value ?? "");
+      if (language !== "en") return text;
+      if (translations[text] !== undefined) return translations[text];
+      if (translations[`${text}。`] !== undefined) return translations[`${text}。`];
+      if (translations[`${text}：`] !== undefined) return translations[`${text}：`];
+      if (/^发现新版本 .+，当前版本 .+$/.test(text)) return text.replace(/^发现新版本 (.+)，当前版本 (.+)$/, "A new version is available: $1; current version: $2");
+      if (/^当前已是最新版本（.+）$/.test(text)) return text.replace(/^当前已是最新版本（(.+)）$/, "You are using the latest version ($1)");
+      if (/^作者：/.test(text)) return text.replace(/^作者：/, "Author: ");
+      if (/^不是有效的 Markdown 文件：/.test(text)) return text.replace(/^不是有效的 Markdown 文件：/, "Not a valid Markdown file: ");
+      if (/^无法打开转换日志：/.test(text)) return text.replace(/^无法打开转换日志：/, "Unable to open the conversion log: ");
+      if (/^无法打开 PDF 保存对话框：/.test(text)) return text.replace(/^无法打开 PDF 保存对话框：/, "Unable to open the PDF save dialog: ");
+      if (/^检查更新失败：/.test(text)) {
+        const detail = text.replace(/^检查更新失败：/, "");
+        const statusMatch = detail.match(/^GitHub RSS 返回状态码 (\d+)$/);
+        if (statusMatch) return `Update check failed: GitHub RSS returned status code ${statusMatch[1]}`;
+        const updateErrors = {
+          "GitHub RSS 内容无法解析": "Unable to parse the GitHub RSS feed",
+          "GitHub RSS 中没有找到最新发行版版本号": "No latest release version was found in the GitHub RSS feed",
+          "连接 GitHub 超时": "Connection to GitHub timed out"
+        };
+        return `Update check failed: ${updateErrors[detail] ?? detail}`;
+      }
+      if (/^图片不可用，请重新选择/.test(text)) return text.replace("图片不可用，请重新选择", "Image unavailable. Please choose it again");
+      if (/^无法清空 res 文件夹：/.test(text)) return text.replace(/^无法清空 res 文件夹：/, "Unable to clear the res folder: ");
+      if (text === "转换正在进行中。") return "A conversion is already in progress";
+      if (text === "未收到有效的文件列表。") return "No valid file list was received";
+      if (/^自定义封面纸张与页面设置不一致：/.test(text)) return text.replace("自定义封面纸张与页面设置不一致：封面为 ", "The custom cover paper size does not match the page setting: cover is ").replace("（纵向，", " (Portrait, ").replace("（横向，", " (Landscape, ").replace("）；实际尺寸 ", "); actual size ").replace("pt；当前页面为 ", " pt; selected page: ").replace("（纵向，", " (Portrait, ").replace("pt）。封面仍会保留并使用，但合并后的尺寸效果可能不一致。", " pt). The cover will still be retained and used, but the merged page size may differ.");
+      return translations[text] ?? text;
+    }
+    function translatePage() {
+      document.documentElement.lang = language === "en" ? "en" : "zh-CN";
+      const toggle = el("language-toggle");
+      for (const option of el("language-options").querySelectorAll("[data-language]")) {
+        option.textContent = language === "en" ? (option.dataset.language === "zh" ? "简体中文" : "英语") : (option.dataset.language === "zh" ? "Chinese" : "English");
+        option.setAttribute("aria-pressed", String(option.dataset.language === language));
+      }
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) {
+        const node = walker.currentNode;
+        if (node.parentElement?.closest("#log,script,style")) continue;
+        if (!originalTextNodes.has(node)) originalTextNodes.set(node, node.nodeValue);
+        const source = originalTextNodes.get(node);
+        node.nodeValue = tr(source);
+      }
+      for (const node of document.querySelectorAll("[placeholder],[title],[aria-label]")) {
+        let originals = originalAttributes.get(node);
+        if (!originals) {
+          originals = new Map();
+          originalAttributes.set(node, originals);
+        }
+        for (const attr of ["placeholder", "title", "aria-label"]) if (node.hasAttribute(attr)) {
+          if (!originals.has(attr)) originals.set(attr, node.getAttribute(attr));
+          node.setAttribute(attr, tr(originals.get(attr)));
+        }
+      }
+      el("toggle-margin-guides").textContent = el("preview-margin-guides").hidden ? tr("显示页边距线") : tr("关闭页边距线");
+      updateFileCountLabel();
+      toggle.textContent = language === "en" ? "语言" : "Language";
+      toggle.setAttribute("aria-label", toggle.textContent);
+      if (config) configureCoverEditor(currentCover());
+    }
+    function updateFileCountLabel() { el("file-count").textContent = language === "en" ? `(${selectedFiles.length} ${selectedFiles.length === 1 ? "file" : "files"})` : `（${selectedFiles.length} 个文件）`; }
+    const pdfjsReady = import("../node_modules/pdfjs-dist/legacy/build/pdf.mjs").then(pdfjs => { pdfjs.GlobalWorkerOptions.workerSrc = new URL("../node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs", document.baseURI).href; return pdfjs; });
+    function closeMessage() {
+      const modal = el("message-modal");
+      modal.classList.remove("is-open");
+      el("custom-cover-drop").classList.remove("invalid");
+      dropZone.classList.remove("invalid");
+      window.setTimeout(() => { if (!modal.classList.contains("is-open")) modal.hidden = true; }, 170);
+    }
+    function showMessage(message, { spinner = false, link = false, updateActions = false, closeText = "确认", showClose = true } = {}) {
+      el("message-text").textContent = tr(String(message ?? "").trim().replace(/[。.]+$/u, ""));
+      el("message-spinner").hidden = !spinner;
+      el("message-link").hidden = !link;
+      el("message-update-actions").hidden = !updateActions;
+      el("message-close").hidden = !showClose;
+      el("message-close").textContent = tr(closeText);
+      const modal = el("message-modal");
+      modal.hidden = false;
+      requestAnimationFrame(() => modal.classList.add("is-open"));
+    }
+    function showError(message) {
+      showMessage(String(message ?? "操作失败"));
+      requestAnimationFrame(() => el("message-close").focus());
+    }
+    let updateCheckPromise = null;
+    async function checkForUpdates(manual = false) {
+      if (manual) showMessage("正在检查更新…", { spinner: true, showClose: false });
+      if (!updateCheckPromise) updateCheckPromise = window.mtopb.checkUpdates().finally(() => { updateCheckPromise = null; });
+      const result = await updateCheckPromise;
+      if (result.error) {
+        if (manual) showError(result.error);
+        return;
+      }
+      if (!result.updateAvailable) {
+        if (manual) showMessage(`当前已是最新版本（${result.currentVersion}）`);
+        return;
+      }
+      showMessage(`发现新版本 ${result.latestVersion}，当前版本 ${result.currentVersion}`, { link: true, updateActions: true, showClose: false });
+    }
+    async function openReleases() {
+      const result = await window.mtopb.openExternalLink("https://github.com/GeorgeNaNN/MtoPB/releases");
+      if (result?.error) showError(result.error);
+    }
+    function currentCover() { return config?.covers?.find(cover => Number(cover.id) === Number(config.selected_cover)); }
+    function renderFiles(files) {
+      selectedFiles = files ?? selectedFiles; updateFileCountLabel(); el("markdown-picker").classList.toggle("has-files", selectedFiles.length > 0); el("file-panel").hidden = selectedFiles.length === 0; fileList.replaceChildren();
+      selectedFiles.forEach((file, index) => {
+        const row = document.createElement("div"), order = document.createElement("span"), name = document.createElement("span"), remove = document.createElement("button");
+        row.className = "file-row"; order.className = "file-order"; name.className = "file-name"; remove.className = "remove-file"; order.textContent = String(index + 1); name.textContent = file.split(/[\\/]/).at(-1); name.title = file; remove.type = "button"; remove.textContent = "×"; remove.title = tr("移除此文件"); remove.disabled = busy;
+        remove.addEventListener("click", async () => { const result = await window.mtopb.removeMarkdown(file); if (result.error) showError(result.error); }); row.append(order, name, remove); fileList.append(row);
+      });
+      emptyFiles.hidden = selectedFiles.length > 0; fileList.hidden = selectedFiles.length === 0; startButton.disabled = busy || selectedFiles.length === 0; openPdf.disabled = true;
+      log.textContent = ""; log.classList.remove("error"); progressTrack.classList.remove("running", "success", "failed"); progress.style.transition = "width .22s ease"; progress.style.width = "0"; progress.style.background = "#2996dc";
+    }
+    function setBusy(value) { busy = value; selectFilesButton.disabled = value; el("clear-files").disabled = value; startButton.disabled = value || !config || selectedFiles.length === 0; for (const button of fileList.querySelectorAll("button")) button.disabled = value; for (const control of el("settings").querySelectorAll("button, input, select, textarea")) control.disabled = value; }
+    function flashInvalidDrop(zone) {
+      zone.classList.add("invalid");
+    }
+    function addFiles(paths) {
+      if (!paths.length) return;
+      window.mtopb.addMarkdown(paths).then(result => {
+        if (result.error) { flashInvalidDrop(dropZone); showError(result.error); }
+        else renderFiles(result.files);
+      });
+    }
+    function setTab(name) { for (const button of document.querySelectorAll(".tab")) button.classList.toggle("active", button.dataset.tab === name); for (const page of document.querySelectorAll(".tab-page")) page.classList.toggle("active", page.dataset.page === name); }
+    async function drawCustomCoverPdf() {
+      if (!coverPdfDocument || config?.cover_type !== "custom") return;
+      const canvas = el("custom-cover-canvas"), width = Math.floor(canvas.clientWidth), height = Math.floor(canvas.clientHeight), pixelRatio = window.devicePixelRatio || 1;
+      if (!width || !height) return;
+      const renderSize = `${width}x${height}@${pixelRatio}`;
+      if (renderSize === coverPdfRenderedSize) return;
+      coverPdfRenderedSize = renderSize;
+      coverPdfRenderTask?.cancel();
+      try {
+        const page = await coverPdfDocument.getPage(1), base = page.getViewport({ scale: 1 });
+        const scale = Math.min(width / base.width, height / base.height) * pixelRatio;
+        const viewport = page.getViewport({ scale });
+        canvas.width = Math.ceil(viewport.width); canvas.height = Math.ceil(viewport.height);
+        const context = canvas.getContext("2d", { alpha: false });
+        context.fillStyle = "#fff"; context.fillRect(0, 0, canvas.width, canvas.height);
+        coverPdfRenderTask = page.render({ canvasContext: context, viewport });
+        await coverPdfRenderTask.promise;
+      } catch (error) {
+        if (error?.name !== "RenderingCancelledException") { el("custom-cover-message").hidden = false; el("custom-cover-message").textContent = tr("PDF 封面预览无法加载"); }
+      } finally { coverPdfRenderTask = null; }
+    }
+    function renderCustomCover() {
+      const file = String(config?.custom_cover_pdf ?? "");
+      el("custom-cover-info").hidden = !file; el("custom-cover-name").textContent = file.split(/[\\/]/).at(-1); el("custom-cover-drop").classList.toggle("has-image", Boolean(file)); el("custom-cover-drop").classList.remove("invalid");
+      el("custom-cover-message").classList.toggle("empty-custom-cover", !file);
+      el("custom-cover-canvas").hidden = true;
+      if (file !== coverPdfRequestedPath) {
+        coverPdfRequestedPath = file; coverPdfPreviewPath = null; coverPdfDimensions = null; coverPdfDocument = null; coverPdfRenderedSize = ""; coverPdfRenderTask?.cancel(); const request = ++coverPdfRequest;
+        el("custom-cover-canvas").width = 1; el("custom-cover-canvas").height = 1; el("custom-cover-message").hidden = false; el("custom-cover-message").textContent = tr(file ? "正在加载封面预览…" : "请上传自定义封面");
+        if (file) window.mtopb.getCoverPdfPreview(file).then(async result => {
+          if (request !== coverPdfRequest || String(config?.custom_cover_pdf ?? "") !== file) return;
+          if (result.error) { el("custom-cover-message").hidden = false; el("custom-cover-message").textContent = tr("PDF 封面预览无法加载"); el("custom-cover-drop").classList.add("invalid"); return; }
+          try {
+            const pdfjs = await pdfjsReady, pdfDocument = await pdfjs.getDocument({ data: result.data, cMapUrl: new URL("../node_modules/pdfjs-dist/cmaps/", window.location.href).href, cMapPacked: true, standardFontDataUrl: new URL("../node_modules/pdfjs-dist/standard_fonts/", window.location.href).href, wasmUrl: new URL("../node_modules/pdfjs-dist/wasm/", window.location.href).href }).promise;
+            if (request !== coverPdfRequest || String(config?.custom_cover_pdf ?? "") !== file) { pdfDocument.destroy(); return; }
+            coverPdfDocument = pdfDocument; coverPdfPreviewPath = file; coverPdfDimensions = [result.width, result.height]; el("custom-cover-canvas").hidden = false; el("custom-cover-message").hidden = true; updatePreview();
+          } catch { el("custom-cover-message").hidden = false; el("custom-cover-message").textContent = tr("PDF 封面预览无法加载"); el("custom-cover-drop").classList.add("invalid"); }
+        });
+      }
+      updatePreview();
+    }
+    function fillCoverFields() {
+      const cover = currentCover(); if (!cover) return;
+      el("main-title").value = cover.main_title ?? ""; el("subtitle").value = cover.subtitle ?? ""; el("author").value = cover.author ?? ""; el("date").value = cover.date ?? ""; el("frame-top").value = cover.frame_top_cm === void 0 ? "" : String(Number(cover.frame_top_cm)); el("frame-horizontal").value = cover.frame_horizontal_cm === void 0 ? "" : String(Number(cover.frame_horizontal_cm)); el("frame-bottom").value = cover.frame_bottom_cm === void 0 ? "" : String(Number(cover.frame_bottom_cm)); el("link-url").value = cover.link_url ?? ""; el("link-text").value = cover.link_text ?? ""; el("link-color").value = cover.link_color ?? "#06c"; el("use-image").checked = Boolean(cover.use_image); el("image-width").value = Number(cover.image_width_percent) > 0 ? String(cover.image_width_percent) : "";
+      configureCoverEditor(cover);
+      renderImageFields();
+    }
+    function configureCoverEditor(cover) {
+      const id = Number(cover.id), usesSubtitle = id === 1 || id === 3, usesMeta = id >= 2, usesLink = id === 1, usesFrame = id === 4;
+      el("main-title-label").textContent = tr(id === 1 ? "主标题" : "标题");
+      el("main-title").placeholder = tr(id === 1 ? "请输入主标题" : "请输入标题");
+      el("subtitle-field").hidden = !usesSubtitle;
+      el("author-field").hidden = !usesMeta;
+      el("date-field").hidden = !usesMeta;
+      el("template-link-settings").hidden = !usesLink;
+      el("use-image-field").hidden = !usesLink;
+      el("cover4-frame-settings").hidden = !usesFrame;
+    }
+    function renderImageFields() {
+      const cover = currentCover(); if (!cover) return;
+      const hasImage = Boolean(cover.image), usesImage = Number(cover.id) === 1 && cover.use_image;
+      el("image-settings").hidden = !usesImage; el("image-width-field").hidden = !usesImage;
+      el("image-drop").classList.toggle("has-image", hasImage); el("image-drop-preview").hidden = !hasImage;
+      el("image-drop").classList.remove("invalid");
+      el("image-info-title").hidden = true; el("image-empty").hidden = true;
+      el("image-name").textContent = String(cover.image ?? "").split(/[\\/]/).at(-1);
+      const widthField = el("image-width-field"), widthSlot = el("image-width-slot");
+      if (widthField.parentElement !== widthSlot) widthSlot.append(widthField);
+    }
+    function readCoverFields() {
+      const cover = currentCover(); if (!cover) return;
+      const id = Number(cover.id);
+      cover.main_title = el("main-title").value;
+      if (id === 1) {
+        const imageWidthInput = el("image-width").value.trim(), imageWidth = Number(imageWidthInput);
+        cover.subtitle = el("subtitle").value; cover.link_url = el("link-url").value; cover.link_text = el("link-text").value; cover.link_color = el("link-color").value; cover.use_image = el("use-image").checked;
+        cover.image_width_percent = imageWidthInput === "" || !Number.isFinite(imageWidth) || imageWidth < 0 ? 0 : imageWidth;
+      }
+      if (id === 3) cover.subtitle = el("subtitle").value;
+      if (id >= 2) { cover.author = el("author").value; cover.date = el("date").value; }
+      if (id === 4) {
+        const frameTop = Number(el("frame-top").value), frameHorizontal = Number(el("frame-horizontal").value), frameBottom = Number(el("frame-bottom").value);
+        cover.frame_top_cm = Number.isFinite(frameTop) && frameTop >= 0 ? frameTop : 0;
+        cover.frame_horizontal_cm = Number.isFinite(frameHorizontal) && frameHorizontal >= 0 ? frameHorizontal : 0;
+        cover.frame_bottom_cm = Number.isFinite(frameBottom) && frameBottom >= 0 ? frameBottom : 0;
+      }
+    }
+    function renderPreviewMeta(prefix, authorValue, dateValue) {
+      const author = String(authorValue ?? "").trim(), date = String(dateValue ?? "").trim();
+      const authorNode = el(`preview-${prefix}-author`), dateNode = el(`preview-${prefix}-date`), meta = el(`preview-${prefix}-meta`);
+      authorNode.hidden = !author; dateNode.hidden = !date;
+      authorNode.textContent = author ? tr(`作者：${author}`) : "";
+      dateNode.textContent = date ? `${tr("日期")}: ${date}` : "";
+      meta.classList.toggle("has-both", Boolean(author && date));
+      meta.classList.toggle("is-one", Boolean(author) !== Boolean(date));
+    }
+    function updatePreview() {
+      const cover = currentCover(); if (!cover) return;
+      const coverId = Number(cover.id);
+      const custom = config?.cover_type === "custom"; el("template-cover-settings").hidden = custom; el("custom-cover-settings").hidden = !custom; el("cover-preview").classList.toggle("custom-cover", custom); el("custom-cover-preview").hidden = !custom; el("reset-current-cover").hidden = custom;
+      for (let id = 1; id <= 4; id += 1) el("cover-preview").classList.toggle(`cover-layout-${id}`, !custom && id === coverId);
+      for (let id = 1; id <= 4; id += 1) el(`preview-template-${id}`).hidden = id !== coverId;
+      const previewImageWidthValue = Number(cover.image_width_percent);
+      const previewImageWidth = Number.isFinite(previewImageWidthValue) && previewImageWidthValue > 0 ? Math.min(100, previewImageWidthValue) : 0;
+      const hasPreviewImage = Boolean(cover.use_image && cover.image && previewImageWidth > 0);
+      el("preview-title").textContent = cover.main_title; el("preview-subtitle").textContent = cover.subtitle; const previewLink = el("preview-link"), linkUrl = String(cover.link_url).trim(); previewLink.textContent = cover.link_text; previewLink.href = linkUrl || "#"; previewLink.setAttribute("aria-disabled", String(!linkUrl)); previewLink.style.color = cover.link_color; el("preview-image").style.display = hasPreviewImage ? "block" : "none"; el("preview-image").style.setProperty("--preview-width", `${previewImageWidth}%`);
+      el("preview-2-title").textContent = cover.main_title || "";
+      el("preview-3-title").textContent = cover.main_title || "";
+      el("preview-3-subtitle").textContent = cover.subtitle || "";
+      el("preview-4-title").textContent = cover.main_title || "";
+      renderPreviewMeta(2, cover.author, cover.date);
+      renderPreviewMeta(3, cover.author, cover.date);
+      renderPreviewMeta(4, cover.author, cover.date);
+      const selectedStyle = el("watermark-style").value;
+      const watermark = { enabled: el("watermark-enabled").checked, text: el("watermark-text").value, style: selectedStyle, color: el("watermark-color").value, opacity: 1 - Number(el("watermark-transparency").value) / 100, font_size: Number(el("watermark-size").value) };
+      const tiled = ["tiled", "tiled-up", "tiled-horizontal"].includes(watermark.style);
+      el("watermark-size-hint").hidden = !tiled;
+      const pageSizes = { A4: [595.28, 841.89], A3: [841.89, 1190.55], A5: [419.53, 595.28], Letter: [612, 792], Legal: [612, 1008] };
+      const pageSize = custom && coverPdfPreviewPath === config.custom_cover_pdf && coverPdfDimensions ? coverPdfDimensions : (pageSizes[el("page-size").value] ?? pageSizes.A4);
+      const coverFontScale = Math.min(pageSize[0] / pageSizes.A4[0], pageSize[1] / pageSizes.A4[1]);
+      const pageSizeList = [...Object.values(pageSizes), ...(custom && coverPdfDimensions ? [coverPdfDimensions] : [])];
+      const preview = el("cover-preview"), previewWrap = preview.parentElement;
+      const previewWrapStyle = getComputedStyle(previewWrap);
+      const availableWidth = Math.max(120, previewWrap.clientWidth - parseFloat(previewWrapStyle.paddingLeft || 0) - parseFloat(previewWrapStyle.paddingRight || 0));
+      const availableHeight = Math.max(220, window.innerHeight - 180);
+      const commonScale = Math.min(
+        availableWidth / Math.max(...pageSizeList.map(([width]) => width)),
+        availableHeight / Math.max(...pageSizeList.map(([, height]) => height))
+      );
+      const previewWidth = pageSize[0] * commonScale;
+      preview.style.width = `${previewWidth}px`;
+      preview.style.aspectRatio = `${pageSize[0]} / ${pageSize[1]}`;
+      preview.style.setProperty("--preview-page-ratio", String(pageSize[0] / pageSize[1]));
+      preview.style.setProperty("--preview-page-scale", previewWidth / pageSize[0]);
+      preview.style.setProperty("--preview-cover-font-scale", String(coverFontScale));
+      const previewCoverUnit = (previewWidth / pageSize[0]) * coverFontScale;
+      const previewCoverSize = value => `${(value * previewCoverUnit).toFixed(3)}px`;
+      preview.style.setProperty("--preview-cover-title-size", previewCoverSize(77.05));
+      preview.style.setProperty("--preview-cover-title-line-height", previewCoverSize(88.06));
+      preview.style.setProperty("--preview-cover-subtitle-size", previewCoverSize(34.4));
+      preview.style.setProperty("--preview-cover-link-size", previewCoverSize(23.39));
+      preview.style.setProperty("--preview-cover-meta-size", previewCoverSize(22));
+      preview.style.setProperty("--preview-cover-2-title-size", previewCoverSize(64));
+      preview.style.setProperty("--preview-cover-rule-1-width", previewCoverSize(265.04));
+      preview.style.setProperty("--preview-cover-rule-2-width", previewCoverSize(283.46));
+      preview.style.setProperty("--preview-cover-3-title-size", previewCoverSize(72));
+      preview.style.setProperty("--preview-cover-3-subtitle-size", previewCoverSize(48));
+      preview.style.setProperty("--preview-cover-4-title-size", previewCoverSize(58));
+      preview.style.setProperty("--preview-cover-4-meta-size", previewCoverSize(21));
+      if (custom && coverPdfPreviewPath === config.custom_cover_pdf) drawCustomCoverPdf();
+      const layer = el("preview-watermark");
+      layer.style.opacity = watermark.opacity;
+      layer.style.display = watermark.enabled ? "block" : "none";
+      if (watermark.enabled && watermark.text.trim()) {
+        const canvas = document.createElement("canvas"), context = canvas.getContext("2d");
+        const width = el("cover-preview").clientWidth, height = el("cover-preview").clientHeight;
+        const ratio = window.devicePixelRatio || 1;
+        canvas.width = Math.round(width * ratio); canvas.height = Math.round(height * ratio);
+        context.scale(ratio, ratio);
+        const fontSize = (tiled ? Math.max(12, watermark.font_size || 12) : watermark.font_size || 12) * width / pageSize[0];
+        context.font = `${fontSize}px "Noto Serif SC Preview"`;
+        context.fillStyle = watermark.color;
+        const text = watermark.text.trim(), metrics = context.measureText(text), phraseWidth = Math.max(1, metrics.width), gap = fontSize * 5;
+        if (tiled) {
+          const angle = (watermark.style === "tiled" ? 35 : watermark.style === "tiled-up" ? -35 : 0) * Math.PI / 180, lineStep = fontSize * 7, columnStep = phraseWidth + gap;
+          const marginX = phraseWidth + fontSize, marginY = phraseWidth * Math.sin(angle) + (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent) + fontSize;
+          let row = 0;
+          for (let y = -marginY; y <= height + marginY; y += lineStep, row++) {
+            const stagger = row % 2 ? columnStep / 2 : 0;
+            for (let x = -marginX + stagger; x <= width + marginX; x += columnStep) {
+              context.save(); context.translate(x, height - y); context.rotate(angle); context.fillText(text, 0, 0); context.restore();
+            }
+          }
+        } else {
+          const fitSize = fontSize;
+          context.font = `${fitSize}px "Noto Serif SC Preview"`;
+          const textWidth = context.measureText(text).width;
+          context.translate(width / 2, height / 2);
+          if (watermark.style === "diagonal") context.rotate(35 * Math.PI / 180);
+          if (watermark.style === "diagonal-up") context.rotate(-35 * Math.PI / 180);
+          context.fillText(text, -textWidth / 2, fitSize * .35);
+        }
+        layer.replaceChildren(canvas);
+      } else layer.replaceChildren();
+      const pageWidthPt = pageSize[0];
+      const cmToPt = 72 / 2.54;
+      const marginValue = id => { const value = Number(el(id).value); return Number.isFinite(value) && value >= 0 ? value : 0; };
+      const previewMarginScale = cmToPt * previewWidth / pageWidthPt;
+      preview.style.setProperty("--preview-pad-top", `${marginValue("page-margin-top") * previewMarginScale}px`);
+      preview.style.setProperty("--preview-pad-horizontal", `${marginValue("page-margin-horizontal") * previewMarginScale}px`);
+      preview.style.setProperty("--preview-pad-bottom", `${marginValue("page-margin-bottom") * previewMarginScale}px`);
+      const frameTop = Number(cover.frame_top_cm ?? .5), frameHorizontal = Number(cover.frame_horizontal_cm ?? .5), frameBottom = Number(cover.frame_bottom_cm ?? .5);
+      preview.style.setProperty("--preview-frame-top", `${(Number.isFinite(frameTop) && frameTop >= 0 ? frameTop : 0) * previewMarginScale}px`);
+      preview.style.setProperty("--preview-frame-horizontal", `${(Number.isFinite(frameHorizontal) && frameHorizontal >= 0 ? frameHorizontal : 0) * previewMarginScale}px`);
+      preview.style.setProperty("--preview-frame-bottom", `${(Number.isFinite(frameBottom) && frameBottom >= 0 ? frameBottom : 0) * previewMarginScale}px`);
+      el("cover-preview").style.setProperty("--preview-width", `${previewImageWidth}%`);
+      if (cover.use_image && cover.image && previewImagePath !== cover.image) {
+        previewImagePath = cover.image; el("preview-image").removeAttribute("src");
+        const request = ++imageRequest;
+        window.mtopb.getCoverImage(cover.image).then(result => { if (request !== imageRequest) return; const image = el("preview-image"), thumbnail = el("image-thumbnail"); if (result.dataUrl) { image.src = result.dataUrl; thumbnail.src = result.dataUrl; } else { image.removeAttribute("src"); image.style.display = "none"; thumbnail.removeAttribute("src"); el("image-drop").classList.add("invalid"); el("image-name").textContent += `（${tr("图片不可用，请重新选择")}）`; } });
+      } else if (!cover.use_image || !cover.image) { imageRequest++; previewImagePath = null; el("preview-image").removeAttribute("src"); el("image-thumbnail").removeAttribute("src"); el("image-drop").classList.remove("invalid"); }
+    }
+    function cssLengthToCm(value) {
+      const match = String(value ?? "").trim().match(/^(-?\d+(?:\.\d+)?)\s*(mm|cm|in|pt|px)?$/i);
+      if (!match) return null;
+      const factors = { mm: 0.1, cm: 1, in: 2.54, pt: 2.54 / 72, px: 2.54 / 96 };
+      return Number(match[1]) * (factors[(match[2] || "cm").toLowerCase()] ?? 1);
+    }
+    function formatMarginCm(value) {
+      const number = Number(value);
+      return Number.isFinite(number) ? String(Number(number.toFixed(4))) : "0";
+    }
+    function currentDateLabel() {
+      const now = new Date;
+      const month = String(now.getMonth() + 1).padStart(2, "0"), day = String(now.getDate()).padStart(2, "0");
+      return `${now.getFullYear()}-${month}-${day}`;
+    }
+    function refreshAutoDates(covers) {
+      for (const cover of covers) {
+        delete cover.date_auto;
+        if (Number(cover.id) >= 2 && Number(cover.id) <= 4) cover.date = currentDateLabel();
+      }
+      return covers;
+    }
+    function readPageMargin() {
+      return `${formatMarginCm(el("page-margin-top").value)}cm ${formatMarginCm(el("page-margin-horizontal").value)}cm ${formatMarginCm(el("page-margin-bottom").value)}cm`;
+    }
+    function setPageMarginFields(value) {
+      const tokens = String(value ?? "").trim().split(/\s+/).filter(Boolean);
+      const values = tokens.map(cssLengthToCm);
+      if (!values.length || values.some(item => item === null || item < 0)) throw new Error("页边距默认配置无效。");
+      let top, horizontal, bottom;
+      if (values.length === 1) [top, horizontal, bottom] = [values[0], values[0], values[0]];
+      else if (values.length === 2) [top, horizontal, bottom] = [values[0], values[1], values[0]];
+      else {
+        [top, horizontal, bottom] = [values[0], values[1], values[2]];
+      }
+      el("page-margin-top").value = formatMarginCm(top);
+      el("page-margin-horizontal").value = formatMarginCm(horizontal);
+      el("page-margin-bottom").value = formatMarginCm(bottom);
+    }    function collectConfig() {
+      readCoverFields(); config.cover_type = el("cover-select").value === "custom" ? "custom" : "template"; if (config.cover_type === "template") config.selected_cover = Number(el("cover-select").value); config.toc_title = el("toc-title").value; config.toc_depth = Number(el("toc-depth").value); config.page_size = el("page-size").value; config.page_margin = readPageMargin(); config.link_annotation_color = el("link-annotation-color").value; config.page_number_start = el("page-number-start").value; config.code_line_numbers = el("code-line-numbers").checked; config.image_pagination = el("image-pagination").value; config.code_block_pagination = el("code-block-pagination").value; config.table_pagination = el("table-pagination").value;
+      config.pdf_metadata = { title: el("pdf-metadata-title").value, author: el("pdf-metadata-author").value, subject: el("pdf-metadata-subject").value, keywords: el("pdf-metadata-keywords").value }; config.language = language;
+      const previousWatermark = config.watermark ?? {};
+      const style = el("watermark-style").value;
+      const fontSize = Number(el("watermark-size").value);
+      const fontSizes = { ...(previousWatermark.font_sizes ?? {}) };
+      fontSizes[style] = fontSize;
+      config.watermark = { ...previousWatermark, enabled: el("watermark-enabled").checked, text: el("watermark-text").value, style: style, color: el("watermark-color").value, opacity: 1 - Number(el("watermark-transparency").value) / 100, font_size: fontSize, font_sizes: fontSizes };
+      return config;
+    }
+    function loadConfig(value) {
+      config = value; language = config.language === "en" ? "en" : "zh"; const select = el("cover-select"); select.replaceChildren(...config.covers.map(cover => { const option = document.createElement("option"); option.value = cover.id; option.textContent = `封面 ${cover.id}`; return option; }), new Option("自定义封面", "custom")); select.value = config.cover_type === "custom" ? "custom" : String(config.selected_cover); translatePage(); fillCoverFields(); renderCustomCover();
+      el("toc-title").value = config.toc_title; el("toc-depth").value = String(config.toc_depth); el("page-size").value = config.page_size; setPageMarginFields(config.page_margin); el("link-annotation-color").value = config.link_annotation_color; el("page-number-start").value = config.page_number_start; el("code-line-numbers").checked = Boolean(config.code_line_numbers); el("image-pagination").value = config.image_pagination; el("code-block-pagination").value = config.code_block_pagination; el("table-pagination").value = config.table_pagination;
+      const pdfMetadata = config.pdf_metadata ?? {};
+      el("pdf-metadata-title").value = pdfMetadata.title ?? ""; el("pdf-metadata-author").value = pdfMetadata.author ?? ""; el("pdf-metadata-subject").value = pdfMetadata.subject ?? ""; el("pdf-metadata-keywords").value = pdfMetadata.keywords ?? "";
+      const watermark = config.watermark;
+      el("watermark-enabled").checked = Boolean(watermark.enabled); el("watermark-settings").hidden = !watermark.enabled; el("watermark-style").value = watermark.style; el("watermark-text").value = watermark.text; el("watermark-color").value = watermark.color; el("watermark-transparency").value = Math.round((1 - watermark.opacity) * 100); el("watermark-size").value = watermark.font_sizes?.[watermark.style] ?? watermark.font_size; clampTiledWatermarkSize(); watermark.font_size = Number(el("watermark-size").value); el("transparency-value").textContent = `${el("watermark-transparency").value}%`; el("watermark-transparency").style.setProperty("--range-progress", `${el("watermark-transparency").value}%`); updatePreview(); setBusy(busy);
+    }
+    async function persistConfig() { if (!config) return; const result = await window.mtopb.saveConfig(collectConfig()); if (result.error) showError(result.error); }
+    function changed() { if (!config) return; collectConfig(); renderImageFields(); el("watermark-settings").hidden = !el("watermark-enabled").checked; el("transparency-value").textContent = `${el("watermark-transparency").value}%`; el("watermark-transparency").style.setProperty("--range-progress", `${el("watermark-transparency").value}%`); updatePreview(); persistConfig(); }
+    async function acceptImage(result, coverId) {
+      if (result.error) return showError(result.error);
+      if (!result.path || busy) return;
+      const cover = config.covers.find(item => Number(item.id) === Number(coverId));
+      if (!cover) return;
+      cover.image = result.path;
+      previewImagePath = null;
+      if (Number(config.selected_cover) === Number(coverId)) changed(); else persistConfig();
+    }
+    function resetPage(page) {
+      if (!defaults || busy) return;
+      collectConfig(); const next = structuredClone(config);
+      if (page === "cover") { next.covers = refreshAutoDates(structuredClone(defaults.covers)); next.selected_cover = defaults.selected_cover; next.cover_type = defaults.cover_type; next.custom_cover_pdf = defaults.custom_cover_pdf; }
+      if (page === "watermark") next.watermark = structuredClone(defaults.watermark);
+      if (page === "layout") for (const key of ["toc_title", "toc_depth", "page_size", "page_margin", "link_annotation_color", "page_number_start", "code_line_numbers"]) next[key] = defaults[key];
+      if (page === "metadata") next.pdf_metadata = structuredClone(defaults.pdf_metadata);
+      loadConfig(next); persistConfig();
+    }
+    function resetCurrentCover() {
+      if (!defaults || busy || config?.cover_type === "custom") return;
+      const selectedId = Number(el("cover-select").value), defaultCover = defaults.covers.find(cover => Number(cover.id) === selectedId);
+      if (!defaultCover) return;
+      collectConfig();
+      const next = structuredClone(config), index = next.covers.findIndex(cover => Number(cover.id) === selectedId);
+      if (index < 0) return;
+      next.covers[index] = refreshAutoDates([structuredClone(defaultCover)])[0];
+      next.selected_cover = selectedId; next.cover_type = "template";
+      loadConfig(next); persistConfig();
+    }
+
+    el("message-close").addEventListener("click", closeMessage);
+    el("message-later").addEventListener("click", closeMessage);
+    el("message-update").addEventListener("click", openReleases);
+    el("message-link").addEventListener("click", event => { event.preventDefault(); openReleases(); });
+    el("check-updates").addEventListener("click", () => checkForUpdates(true));
+    el("language-toggle").addEventListener("click", () => { const menu = el("language-options"); menu.hidden = !menu.hidden; el("language-toggle").setAttribute("aria-expanded", String(!menu.hidden)); });
+    for (const option of el("language-options").querySelectorAll("[data-language]")) option.addEventListener("click", () => { language = option.dataset.language; el("language-options").hidden = true; el("language-toggle").setAttribute("aria-expanded", "false"); translatePage(); if (config) { config.language = language; configureCoverEditor(currentCover()); updatePreview(); persistConfig(); } });
+    document.addEventListener("click", event => { if (!event.target.closest(".language-menu")) { el("language-options").hidden = true; el("language-toggle").setAttribute("aria-expanded", "false"); } });
+    el("message-modal").addEventListener("click", event => { if (event.target === el("message-modal")) closeMessage(); });
+    document.addEventListener("keydown", event => { if (event.key === "Escape" && !el("message-modal").hidden) closeMessage(); });
+    for (const button of document.querySelectorAll(".tab")) button.addEventListener("click", () => setTab(button.dataset.tab));
+    el("toggle-margin-guides").addEventListener("click", () => {
+      const guides = el("preview-margin-guides"), visible = guides.hidden;
+      guides.hidden = !visible;
+      el("toggle-margin-guides").textContent = tr(visible ? "关闭页边距线" : "显示页边距线");
+      el("toggle-margin-guides").setAttribute("aria-pressed", String(visible));
+    });
+    el("cover-select").addEventListener("change", () => { readCoverFields(); config.cover_type = el("cover-select").value === "custom" ? "custom" : "template"; if (config.cover_type === "template") config.selected_cover = Number(el("cover-select").value); fillCoverFields(); renderCustomCover(); persistConfig(); });
+    el("image-width").addEventListener("input", changed);
+    el("image-width").addEventListener("change", () => { if (el("image-width").value !== "" && Number(el("image-width").value) > 100) el("image-width").value = "100"; changed(); });
+    function clampTiledWatermarkSize() { if (["tiled", "tiled-up", "tiled-horizontal"].includes(el("watermark-style").value) && el("watermark-size").value !== "" && Number(el("watermark-size").value) < 12) el("watermark-size").value = "12"; }
+    el("watermark-size").addEventListener("input", changed);
+    el("watermark-size").addEventListener("change", () => { clampTiledWatermarkSize(); changed(); });
+    for (const id of ["main-title", "subtitle", "author", "frame-top", "frame-horizontal", "frame-bottom", "link-url", "link-text", "link-color", "use-image", "watermark-enabled", "watermark-text", "watermark-color", "watermark-transparency", "toc-title", "toc-depth", "page-size", "page-margin-top", "page-margin-horizontal", "page-margin-bottom", "link-annotation-color", "page-number-start", "code-line-numbers", "image-pagination", "code-block-pagination", "table-pagination", "pdf-metadata-title", "pdf-metadata-author", "pdf-metadata-subject", "pdf-metadata-keywords"]) el(id).addEventListener("input", changed);
+    el("date").addEventListener("input", changed);
+    el("date").addEventListener("change", () => { const cover = currentCover(); if (!cover) return; if (!el("date").value.trim()) el("date").value = currentDateLabel(); changed(); });
+    for (const id of ["frame-top", "frame-horizontal", "frame-bottom"]) el(id).addEventListener("change", () => { if (el(id).value !== "" && Number(el(id).value) < 0) el(id).value = "0"; changed(); });
+    el("watermark-style").addEventListener("change", () => {
+      const watermark = config?.watermark;
+      if (!watermark) return;
+      const previousStyle = watermark.style;
+      const previousSize = Number(el("watermark-size").value);
+      watermark.font_sizes ??= {};
+      if (Number.isFinite(previousSize) && previousSize > 0) watermark.font_sizes[previousStyle] = previousSize;
+      const nextStyle = el("watermark-style").value;
+      const nextSize = watermark.font_sizes[nextStyle] ?? defaults?.watermark?.font_sizes?.[nextStyle] ?? 150;
+      el("watermark-size").value = String(nextSize);
+      clampTiledWatermarkSize();
+      changed();
+    });
+    el("preview-link").addEventListener("click", async event => {
+      event.preventDefault();
+      const url = String(currentCover()?.link_url || "").trim();
+      if (!url) return;
+      const result = await window.mtopb.openExternalLink(url);
+      if (result?.error) showError(result.error);
+    });
+    el("select-image").addEventListener("click", async () => { const coverId = config.selected_cover; await acceptImage(await window.mtopb.selectCoverImage(), coverId); });
+    const coverPaperSizes = { A3: [841.89, 1190.55], A4: [595.28, 841.89], A5: [419.53, 595.28], Letter: [612, 792], Legal: [612, 1008] };
+    function identifyCoverPaper(width, height) {
+      const tolerance = 1.5;
+      for (const [name, [paperWidth, paperHeight]] of Object.entries(coverPaperSizes)) {
+        if (Math.abs(width - paperWidth) <= tolerance && Math.abs(height - paperHeight) <= tolerance) return { name, orientation: "纵向" };
+        if (Math.abs(width - paperHeight) <= tolerance && Math.abs(height - paperWidth) <= tolerance) return { name, orientation: "横向" };
+      }
+      return null;
+    }
+    function formatCoverPaper(width, height) {
+      const paper = identifyCoverPaper(width, height);
+      if (paper) return language === "en" ? `${paper.name} (${tr(paper.orientation)})` : `${paper.name}（${paper.orientation}）`;
+      return language === "en" ? `Custom size (${width.toFixed(1)} × ${height.toFixed(1)} pt)` : `自定义尺寸（${width.toFixed(1)} × ${height.toFixed(1)} pt）`;
+    }
+    async function acceptCoverPdf(result) {
+      if (result.error) { el("custom-cover-drop").classList.add("invalid"); return showError(result.error); }
+      if (!result.path || busy) return;
+      config.custom_cover_pdf = result.path;
+      config.cover_type = "custom";
+      el("cover-select").value = "custom";
+      renderCustomCover();
+      persistConfig();
+      const selectedSize = coverPaperSizes[el("page-size").value];
+      if (!selectedSize || (Math.abs(result.width - selectedSize[0]) <= 1.5 && Math.abs(result.height - selectedSize[1]) <= 1.5)) return;
+      showMessage(language === "en"
+        ? `The custom cover paper size does not match the page setting: cover is ${formatCoverPaper(result.width, result.height)}, actual size ${result.width.toFixed(1)} × ${result.height.toFixed(1)} pt; selected page is ${el("page-size").selectedOptions[0].textContent} (Portrait, ${selectedSize[0]} × ${selectedSize[1]} pt). The cover will still be retained and used, but the merged page size may differ.`
+        : `自定义封面纸张与页面设置不一致：封面为 ${formatCoverPaper(result.width, result.height)}，实际尺寸 ${result.width.toFixed(1)} × ${result.height.toFixed(1)} pt；当前页面为 ${el("page-size").value}（纵向，${selectedSize[0]} × ${selectedSize[1]} pt）。封面仍会保留并使用，但合并后的尺寸效果可能不一致。`);
+    }
+    el("select-cover-pdf").addEventListener("click", async () => acceptCoverPdf(await window.mtopb.selectCoverPdf()));
+    el("remove-cover-pdf").addEventListener("click", () => { config.custom_cover_pdf = ""; config.cover_type = "custom"; el("cover-select").value = "custom"; fillCoverFields(); renderCustomCover(); persistConfig(); });
+    el("remove-image").addEventListener("click", () => { currentCover().image = ""; changed(); });
+    el("reset-current-cover").addEventListener("click", resetCurrentCover);
+    for (const button of document.querySelectorAll("[data-reset]")) button.addEventListener("click", () => resetPage(button.dataset.reset));
+    el("reset-all").addEventListener("click", () => { if (!defaults || busy) return; const next = structuredClone(defaults); next.language = language; refreshAutoDates(next.covers); loadConfig(next); persistConfig(); });
+    selectFilesButton.addEventListener("click", async () => { const result = await window.mtopb.selectMarkdown(); if (result.error) showError(result.error); else if (result.files) renderFiles(result.files); });
+    el("clear-files").addEventListener("click", async () => { const result = await window.mtopb.clearMarkdown(); if (result.error) showError(result.error); else renderFiles(result.files); });
+    const dragDepth = new WeakMap();
+    for (const zone of [dropZone, el("image-drop"), el("custom-cover-drop")]) {
+      zone.addEventListener("dragenter", event => {
+        event.preventDefault();
+        if (busy) return;
+        dragDepth.set(zone, (dragDepth.get(zone) || 0) + 1);
+        zone.classList.add("dragging");
+      });
+      zone.addEventListener("dragover", event => {
+        event.preventDefault();
+        if (busy) return;
+        if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+        zone.classList.add("dragging");
+      });
+      zone.addEventListener("dragleave", event => {
+        event.preventDefault();
+        if (event.relatedTarget instanceof Node && zone.contains(event.relatedTarget)) return;
+        dragDepth.set(zone, 0);
+        zone.classList.remove("dragging");
+      });
+      zone.addEventListener("drop", event => {
+        event.preventDefault();
+        dragDepth.set(zone, 0);
+        zone.classList.remove("dragging");
+      });
+    }
+    window.addEventListener("dragover", event => event.preventDefault()); window.addEventListener("drop", event => event.preventDefault());
+    window.mtopb.onFileDrop(async ({ paths, target }) => {
+      if (busy || !config) return;
+      if (target === "markdown") addFiles(paths);
+      else if (target === "custom-cover" && config.cover_type === "custom") { if (paths.length !== 1) return showError("请一次添加一个 PDF 封面。"); await acceptCoverPdf(await window.mtopb.validateCoverPdf(paths[0])); }
+      else if (target === "image" && currentCover().use_image) {
+        if (paths.length !== 1) return showError("请一次添加一张封面图片。");
+        const coverId = config.selected_cover;
+        await acceptImage(await window.mtopb.getCoverImage(paths[0]), coverId);
+      }
+    });
+    startButton.addEventListener("click", async () => { const result = await window.mtopb.startBuild(collectConfig()); if (result.error) showError(result.error); });
+    window.mtopb.onBuildEvent(event => { if (event.type === "selection") renderFiles(event.files); else if (event.type === "started") { setBusy(true); log.classList.remove("error"); log.textContent = ""; progressTrack.classList.remove("success", "failed"); progressTrack.classList.add("running"); progress.style.transition = "width .22s ease"; progress.style.width = "4%"; progress.style.background = "#2996dc"; openPdf.disabled = true; } else if (event.type === "output") { log.textContent += event.text; log.scrollTop = log.scrollHeight; const match = event.text.match(/\b(\d+)\/(\d+)\b/); if (match) progress.style.width = `${Math.max(4, Math.min(100, Number(match[1]) / Number(match[2]) * 100))}%`; if (event.stream === "stderr") log.classList.add("error"); } else if (event.type === "success") { setBusy(false); progressTrack.classList.remove("running", "failed"); progressTrack.classList.add("success"); progress.style.background = "#2d9a68"; progress.style.width = "100%"; openPdf.disabled = false; } else if (event.type === "failed") { setBusy(false); progressTrack.classList.remove("running", "success"); progressTrack.classList.add("failed"); progress.style.transition = "none"; progress.style.background = "#cf5261"; progress.style.width = "100%"; log.classList.add("error"); log.textContent += `${log.textContent ? "\n" : ""}${event.message}`; log.scrollTop = log.scrollHeight; } });
+    el("view-log").addEventListener("click", async () => { const result = await window.mtopb.openLog(); if (result?.error) showError(result.error); }); openPdf.addEventListener("click", () => window.mtopb.openPdf());
+    new ResizeObserver(updatePreview).observe(el("cover-preview").parentElement); window.addEventListener("resize", updatePreview);
+    document.fonts.ready.then(updatePreview);
+    setBusy(true);
+    window.mtopb.getConfig().then(result => { if (result.error) { showError(result.error); } else { setBusy(false); el("app-version").textContent = `v${result.version}`; defaults = structuredClone(result.defaults); loadConfig(result.config); checkForUpdates(false); } }).catch(error => { showError(error?.message || String(error)); });
+  </script>
+
+
+</body></html>
+

@@ -1,0 +1,30 @@
+{
+  "name": "mtopb-desktop",
+  "productName": "MtoPB",
+  "main": "src/electron-main.cjs",
+  "type": "module",
+  "scripts": {
+    "sync-version": "node sync-version.mjs"
+  },
+  "dependencies": {
+    "@pdf-lib/fontkit": "^1.1.1",
+    "@vscode/markdown-it-katex": "^1.1.1",
+    "fonteditor-core": "^2.6.3",
+    "highlight.js": "^11.10.0",
+    "katex": "^0.16.11",
+    "markdown-it": "^14.1.0",
+    "markdown-it-anchor": "^9.2.0",
+    "markdown-it-container": "^4.0.0",
+    "markdown-it-github-alerts": "^1.0.1",
+    "markdown-it-mark": "^4.0.0",
+    "markdown-it-task-lists": "^2.1.1",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^6.1.200",
+    "playwright-core": "^1.65.0",
+    "yaml": "^2.6.0"
+  },
+  "devDependencies": {
+    "pe-library": "^2.0.3",
+    "resedit": "^3.1.1"
+  }
+}
