@@ -68,7 +68,6 @@ MtoPB/
 ├── resources/          # 应用程序代码、模板及运行依赖
 ├── config.yml          # 软件版本与默认配置
 ├── LICENSE             # MIT 许可证
-├── MtoPB.exe           # Windows 桌面程序
 ├── README.en.md        # 英文项目说明
 ├── README.md           # 中文项目说明
 ├── sync.bat            # 将配置中的版本号同步到程序信息
