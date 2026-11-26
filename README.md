@@ -29,6 +29,8 @@
 
 MtoPB 全称为 Markdown to PDF Book，是一款基于 [Electron](https://github.com/electron/electron) 构建的 Windows 桌面软件，可将一个或多个 Markdown 文件合并并生成 PDF。软件使用内置 Chromium 将 HTML 排版并生成 PDF，再对 PDF 进行页码、目录页码、书签、水印等后处理。
 
+> 软件不会自动在 C 盘、系统目录等其他位置存放数据，所有相关文件和数据只保存在软件自身目录里。卸载程序会完整删除全部程序与用户数据，无残留文件。
+
 ## 二、项目信息
 
 - 作者：[GeorgeNaNN](https://github.com/GeorgeNaNN)
