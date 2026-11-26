@@ -640,11 +640,11 @@ ipcMain.handle("start-build", async (_event, config) => {
             ? path.basename(selectedFiles[0], path.extname(selectedFiles[0]))
             : "MtoPB";
         const exportDirectory = exportPath ? path.dirname(exportPath) : app.getPath("desktop");
+        const isEnglish = config.language === "en";
         result = await dialog.showSaveDialog(mainWindow, {
-            title: "选择 PDF 保存位置和文件名",
+            title: isEnglish ? "Choose PDF save location and file name" : "选择 PDF 保存位置和文件名",
             defaultPath: path.join(exportDirectory, `${suggestedBaseName}.pdf`),
-            buttonLabel: "保存并开始转换",
-            filters: [{ name: "PDF 文件", extensions: ["pdf"] }]
+            filters: [{ name: isEnglish ? "PDF files" : "PDF 文件", extensions: ["pdf"] }]
         });
     } catch (error) {
         buildStarting = false;
