@@ -1,6 +1,6 @@
 ## 1. Introduction
 
-MtoPB is a Windows desktop application built with [Electron](https://github.com/electron/electron). It combines one or more Markdown files and exports them as a PDF. The application uses its built-in Chromium to lay out HTML and render the PDF, then applies post-processing such as page numbers, table-of-contents page numbers, bookmarks, and watermarks.
+MtoPB stands for Markdown to PDF Book. It is a Windows desktop application built with [Electron](https://github.com/electron/electron). It combines one or more Markdown files and exports them as a PDF. The application uses its built-in Chromium to lay out HTML and render the PDF, then applies post-processing such as page numbers, table-of-contents page numbers, bookmarks, and watermarks.
 
 ## 2. Project Information
 
