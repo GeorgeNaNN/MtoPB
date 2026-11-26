@@ -2,6 +2,8 @@
 
 MtoPB stands for Markdown to PDF Book. It is a Windows desktop application built with [Electron](https://github.com/electron/electron). It combines one or more Markdown files and exports them as a PDF. The application uses its built-in Chromium to lay out HTML and render the PDF, then applies post-processing such as page numbers, table-of-contents page numbers, bookmarks, and watermarks.
 
+> The software will not automatically store data on the C drive, system directories, or other locations. All relevant files and data are only saved in the software's own directory. The uninstaller will completely delete all program and user data without residual files.
+
 ## 2. Project Information
 
 - Author: [GeorgeNaNN](https://github.com/GeorgeNaNN)
