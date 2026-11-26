@@ -1,4 +1,4 @@
-<h1 align="center">📚 MtoPB</h1>
+<h1 align="center"><sub><img src="ico/mtopb.png" alt="" height="50"></sub> MtoPB</h1>
 
 <p align="center">
   <img src="https://count.getloli.com/@mtopb?name=mtopb&theme=random&padding=7&offset=0&align=top&scale=1&pixelated=1&darkmode=auto" alt="Moe Counter">
@@ -27,7 +27,7 @@
 
 ## 一、简介
 
-MtoPB 是一款基于 [Electron](https://github.com/electron/electron) 构建的 Windows 桌面软件，可将一个或多个 Markdown 文件合并并生成 PDF。软件使用内置 Chromium 将 HTML 排版并生成 PDF，再对 PDF 进行页码、目录页码、书签、水印等后处理。
+MtoPB 全称为 Markdown to PDF Book，是一款基于 [Electron](https://github.com/electron/electron) 构建的 Windows 桌面软件，可将一个或多个 Markdown 文件合并并生成 PDF。软件使用内置 Chromium 将 HTML 排版并生成 PDF，再对 PDF 进行页码、目录页码、书签、水印等后处理。
 
 ## 二、项目信息
 
